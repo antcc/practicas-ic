@@ -6,6 +6,7 @@
 ;;; desplazar una ficha propia de la posición en que se encuentra
 ;;; (i,j) a una contigua.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ingeniería del Conocimiento. Curso 2019/20.
 ;;; Antonio Coín Castro.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -269,6 +270,8 @@
 )
 
 ;;; Comprueba si un jugador puede realizar un movimiento ganador.
+;;; Si cambia el estado del tablero, los jugadores dejan automáticamente
+;;; de poder ganar.
 
 (defrule Puede_ganar_fichas_sin_colocar
 (declare (salience 2))
@@ -420,10 +423,10 @@
 (defrule Juega_X_ganar_fichas_sin_colocar
 (declare (salience -1))
 ?f <- (Turno X)
-?g <- (Puede_ganar 0 0 ?i ?j X)
+(Puede_ganar 0 0 ?i ?j X)
 =>
 (printout t "X: Juego poner ficha en " ?i ?j  " (para ganar)" crlf)
-(retract ?f ?g)
+(retract ?f)
 (assert (Juega X 0 0 ?i ?j))
 )
 
@@ -431,11 +434,11 @@
 (declare (salience -1))
 ?f <- (Turno X)
 (Todas_en_tablero X)
-?g <- (Puede_ganar ?origen_i ?origen_j ?destino_i ?destino_j X)
+(Puede_ganar ?origen_i ?origen_j ?destino_i ?destino_j X)
 =>
 (printout t "X: Juego mover la ficha de " ?origen_i ?origen_j
   " a " ?destino_i ?destino_j " (para ganar)" crlf)
-(retract ?f ?g)
+(retract ?f)
 (assert (Juega X ?origen_i ?origen_j ?destino_i ?destino_j))
 )
 
@@ -446,10 +449,10 @@
 (declare (salience -2))
 ?f <- (Turno X)
 (Fichas_sin_colocar X ?n)
-?g <- (Puede_ganar ? ? ?i ?j O)
+(Puede_ganar ? ? ?i ?j O)
 =>
 (printout t "X: Juego poner ficha en " ?i ?j " (para evitar perder)" crlf)
-(retract ?f ?g)
+(retract ?f)
 (assert (Juega X 0 0 ?i ?j))
 )
 
@@ -457,13 +460,13 @@
 (declare (salience -2))
 ?f <- (Turno X)
 (Todas_en_tablero X)
-?g <- (Puede_ganar ? ? ?destino_i ?destino_j O)
+(Puede_ganar ? ? ?destino_i ?destino_j O)
 (Conectado ?origen_i ?origen_j ? ?destino_i ?destino_j)
 (Posicion ?origen_i ?origen_j X)
 =>
 (printout t "X: Juego mover la ficha de " ?origen_i ?origen_j
   " a " ?destino_i ?destino_j " (para evitar perder)" crlf)
-(retract ?f ?g)
+(retract ?f)
 (assert (Juega X ?origen_i ?origen_j ?destino_i ?destino_j))
 )
 
