@@ -474,6 +474,18 @@
 ;;; En el caso de mover, puede que el movimiento no sea definitivo.
 ;;; Jugada con la menor prioridad.
 
+; Si podemos, colocamos la primera ficha en el centro
+(defrule Juega_X_aleatorio_fichas_sin_colocar_inicio
+(declare (salience -2))
+?f <- (Turno X)
+(Fichas_sin_colocar X 3)
+(Posicion 2 b " ")
+=>
+(printout t "X: Juego poner ficha en " 2 b " (por ser la primera)" crlf)
+(retract ?f)
+(assert (Juega X 0 0 2 b))
+)
+
 (defrule Juega_X_aleatorio_fichas_sin_colocar
 (declare (salience -3))
 ?f <- (Turno X)
