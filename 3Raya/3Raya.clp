@@ -259,14 +259,14 @@
 ;;; Comprobamos si tenemos dos fichas en línea (no queremos información simétrica).
 ;;; Si movemos alguna de las fichas, dejamos de tener 2 en línea automáticamente.
 
-(defrule 2_en_linea
+(defrule Dos_en_linea
 (declare (salience 2))
 (logical (Posicion ?i1 ?j1 ?jugador) (Posicion ?i2 ?j2 ?jugador))
 (En_linea ?forma ?i1 ?j1 ?i2 ?j2)
-(not (2_en_linea ?forma ?i2 ?j2 ?i1 ?j1 ?jugador))
+(not (Dos_en_linea ?forma ?i2 ?j2 ?i1 ?j1 ?jugador))
 (test (neq " " ?jugador))
 =>
-(assert (2_en_linea ?forma ?i1 ?j1 ?i2 ?j2 ?jugador))
+(assert (Dos_en_linea ?forma ?i1 ?j1 ?i2 ?j2 ?jugador))
 )
 
 ;;; Comprueba si un jugador puede realizar un movimiento ganador.
@@ -276,7 +276,7 @@
 (defrule Puede_ganar_fichas_sin_colocar
 (declare (salience 2))
 (logical (not (Todas_en_tablero ?jugador)) (Posicion ?i2 ?j2 " "))
-(2_en_linea ?forma ?i1 ?j1 ? ? ?jugador)
+(Dos_en_linea ?forma ?i1 ?j1 ? ? ?jugador)
 (En_linea ?forma ?i1 ?j1 ?i2 ?j2)
 =>
 (assert (Puede_ganar 0 0 ?i2 ?j2 ?jugador))
@@ -286,7 +286,7 @@
 (declare (salience 2))
 (logical
   ; Debemos tener 2 en línea y un hueco en la línea
-  (2_en_linea ?forma ?i1 ?j1 ? ? ?jugador)
+  (Dos_en_linea ?forma ?i1 ?j1 ? ? ?jugador)
   (Posicion ?i2 ?j2 " ")
   ; Debemos poder mover una ficha nuestra (i3, j3) al hueco libre
   (Posicion ?i3 ?j3 ?jugador))
