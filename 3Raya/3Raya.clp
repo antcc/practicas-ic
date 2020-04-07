@@ -4,7 +4,7 @@
 ;;; libremente en cualquier posición libre (i,j) con 0 < i, j < 4.
 ;;; Cuando se han puesto las 3 fichas, las jugadas consisten en
 ;;; desplazar una ficha propia de la posición en que se encuentra
-;;; (i,j) a una contigua.
+;;; a una contigua.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Ingeniería del Conocimiento. Curso 2019/20.
 ;;; Antonio Coín Castro.
@@ -324,16 +324,16 @@
 
 ;;; Si al mover una ficha de X dejamos un hueco para que el jugador
 ;;; humano gane, marcamos el movimiento como descartado y lo revertimos.
-;;; Esta regla se activa tras haber actualizado el estado.
+;;; No cambiamos de turno. Esta regla se activa tras haber actualizado el estado.
 
 (defrule Juega_X_mover_revertir
 (declare (salience 1))
 ?f <- (Juega X ?origen_i ?origen_j ?destino_i ?destino_j)
 ?g <- (Puede_ganar ? ? ?origen_i ?origen_j O)
+?h <- (Total_descartados_X ?n)
 ; Los siguientes hechos son ciertos porque ya hemos movido la ficha
-?h <- (Posicion ?origen_i ?origen_j " ")
-?k <- (Posicion ?destino_i ?destino_j X)
-?l <- (Total_descartados_X ?n)
+?k <- (Posicion ?origen_i ?origen_j " ")
+?l <- (Posicion ?destino_i ?destino_j X)
 =>
 (retract ?f ?g ?h ?k ?l)
 (assert (Turno X) (Posicion ?origen_i ?origen_j X)
@@ -341,21 +341,22 @@
   (Total_descartados_X (+ ?n 1)))
 )
 
-;;; Si al mover una ficha no hay peligro de que el jugador humano gane,
+;;; Si al mover una ficha no hay peligro de que el jugador humano gane
+;;; colocando en la posición que acabamos de dejar vacía,
 ;;; seguimos adelante con el movimiento y limpiamos la lista de
 ;;; movimientos descartados. También cambiamos de turno. Esta regla se
 ;;; activa tras haber actualizado el estado.
 
-; Si continuamos, es seguro que no perdemos en el siguiente turno.
 (defrule Juega_X_mover_continuar
 (declare (salience 1))
 ?f <- (Juega X ?origen_i ?origen_j ?destino_i ?destino_j)
 (Todas_en_tablero X)
-(Posicion ?origen_i ?origen_j " ") ; Para que se active la regla tras haber movido la ficha
 (not (Puede_ganar ? ? ?origen_i ?origen_j O))
+; Para que no se active esta regla antes de Juega_X_mover_actualiza_estado_temporal
+(Posicion ?origen_i ?origen_j " ") 
 =>
 (printout t "X: Juego mover la ficha de " ?origen_i ?origen_j " a "
-  ?destino_i ?destino_j " (aleatoriamente, pero no pierdo)" crlf)
+  ?destino_i ?destino_j " (aleatoriamente, pero no introduzco peligro de perder)" crlf)
 (retract ?f)
 (assert (Turno O) (Limpia_descartados_X))
 )
