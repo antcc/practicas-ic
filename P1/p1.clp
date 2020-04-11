@@ -18,7 +18,24 @@
 (Nombre_rama TI "Tecnologias de la Informacion")
 )
 
-;;; Inicializamos la puntuación de todas las ramas a 0.
+(deffacts Descripciones
+(Descripcion CSI (format nil "En esta rama hay una gran exigencia tanto a nivel de matematicas
+como de programacion, pero se puede sobrellevar siendo trabajador. Deberías tener una buena nota.
+Es una buena forma de acabar como docente."))
+(Descripcion IS (format nil "Si te gusta la programacion y no tienes ningun otro interes
+particular, esta rama es una buena eleccion, aunque no vas a ver mucho sobre hardware.
+No viene mal tener buena nota."))
+(Descripcion IC (format nil "La rama del hardware por excelencia. Si quieres huir de las
+matematicas y eres trabajador, las empresas lo valoraran bastante."))
+(Descripcion SI (format nil "En esta rama se tocan temas tanto de programacion, como de
+tecnologias web y de bases de datos. Un buen popurri que te permitira preparar unas oposiciones
+para trabajar en la administracion."))
+(Descripcion TI (format nil "En esta rama se valora el interes por tecnologias mas alla de la
+programacion pura, en la que no es del todo imprescindible ser muy trabajador o tener buena nota.
+No veras muchas matematicas y podras trabajar donde quieras."))
+)
+
+;;; Inicializamos la puntuacion de todas las ramas a 0.
 
 (deffacts Inicial
 (Puntuacion CSI 0)
@@ -28,7 +45,7 @@
 (Puntuacion TI 0)
 )
 
-;;; Inicializamos los valores de las respuestas numéricas
+;;; Inicializamos los valores de las respuestas numericas
 
 (deffacts Por_defecto
 (Evaluacion mat desconocido)
@@ -78,20 +95,20 @@
   (Abreviado ?cosa N "no"))
 )
 
-;;; Declaramos las cosas que contribuyen a la elección de una rama,
-;;; y en qué factor en [0.5, 1] lo hacen.
+;;; Declaramos las cosas que contribuyen a la eleccion de una rama,
+;;; y en que factor en [0.5, 1] lo hacen.
 
 (deffacts Contribucion
 ; CSI
 (Contribuye mat CSI 1)
-(Contribuye prog CSI 1)
+(Contribuye prog CSI 0.75)
 (Contribuye nota CSI 0.75)
 (Contribuye trabajador CSI 0.75)
 (Contribuye docencia CSI 0.5)
 ; IS
 (Contribuye mat IS 0.75)
 (Contribuye prog IS 1)
-(Contribuye nota IS 0.5)
+(Contribuye nota IS 0.75)
 (Contribuye docencia IS 0.5)
 (Contribuye empresa IS 0.5)
 ; IC
@@ -120,8 +137,9 @@
 (Contribuye_inv web CSI 1)
 ; IS
 (Contribuye_inv hw IS 1.5)
+(Contribuye_inv bbdd IS 1)
 ; IC
-(Contribuye_inv mat IC 1)
+(Contribuye_inv mat IC 1.5)
 (Contribuye_inv web IC 1)
 (Contribuye_inv bbdd IC 1)
 ; SI
@@ -134,8 +152,8 @@
 (Contribuye_inv trabajador TI 0.75)
 )
 
-;;; Expresión en lenguaje natural de las distintas cosas que contribuyen
-;;; a la elección de rama.
+;;; Expresion en lenguaje natural de las distintas cosas que contribuyen
+;;; a la eleccion de rama.
 
 (deffacts Equivalencia
 (Equivalencia_texto mat "Tu grado de interes por las matematicas es ")
@@ -148,7 +166,7 @@
 (Equivalencia_texto bbdd "Te interesan las bases de datos: ")
 )
 
-;;; Motivos vacíos inicialmente
+;;; Motivos vacios inicialmente
 (deffacts Motivos
 (Motivo CSI "")
 (Motivo IS "")
@@ -160,12 +178,20 @@
 ;;; Mensaje de bienvenida
 
 (defrule Bienvenida
+(declare (salience 11))
+=>
+(printout t "Bienvenido al sistema de ayuda de eleccion de rama. Te hare una serie " crlf
+  "de preguntas y te recomendare una(s) rama(s) como lo haria un estudiante. Si a cualquier " crlf
+  "pregunta numerica contestas '-1' o a cualquier pregunta categorica contestas 'X', el " crlf
+  "sistema parara de hacer preguntas." crlf)
+)
+
+(defrule Modo
 (declare (salience 10))
 =>
-(printout t "Bienvenido al sistema de ayuda de eleccion de rama. Te hare una serie "
-  "de preguntas y te recomendare una(s) rama(s) como lo haria un estudiante. Si a cualquier "
-  "pregunta numerica contestas '-1' o a cualquier pregunta categorica contestas 'X', el "
-  "sistema parara de hacer preguntas." crlf)
+(printout t crlf "Quieres que en la exposicion de motivos salgan absolutamente todos los " crlf
+  "factores que han influido? (si respondes que no, solo saldran los mas relevantes) (S/N): ")
+(assert (Modo_completo (read)))
 )
 
 ;;;;;; PREGUNTAS
@@ -217,7 +243,7 @@
 (not (Parar))
 =>
 (printout t "Cual es tu nota media? (5-10): ")
-; Reescalamos la nota a [4-10]
+; Reescalamos la nota a [4-10] para que un 5 sea "baja"
 (bind ?nota (read))
 (bind ?temp (* ?nota 1.2))
 (bind ?nota_escalada (- ?temp 2))
@@ -268,7 +294,7 @@
 
 ;;;;;; TRANSFORMAR VARIABLES CATEGÓRICAS A NUMÉRICAS
 
-; Si la respuesta es "No sé", no sumamos a nada
+; Si la respuesta es "No se", no sumamos a nada
 
 (defrule Transforma_futuro_docencia
 (declare (salience 2))
@@ -404,7 +430,23 @@
   (Sumado ?cosa ?rama) (Agregar_motivo ?cosa ?rama ?puntos))
 )
 
-; En principio no agregamos los motivos poco importantes
+; Solo agregamos los motivos poco importantes en el modo completo
+(defrule Agregar_motivo_poco_importante
+(declare (salience 1))
+(Modo_completo S)
+?f <- (Agregar_motivo ?cosa ?rama ?puntos)
+(Evaluacion ?cosa ?eval_abreviado)
+(Equivalencia_texto ?cosa ?texto)
+(test (< ?puntos 5))
+?g <- (Motivo ?rama ?motivo_antiguo)
+(Abreviado ?cosa ?eval_abreviado ?eval)
+(not (Agregado ?cosa ?rama)) ; Para que 'futuro' solo se agregue una vez
+=>
+(retract ?f ?g)
+(assert
+  (Agregado ?cosa ?rama)
+  (Motivo ?rama (format nil (str-cat ?motivo_antiguo "  * " ?texto ?eval "%n"))))
+)
 
 (defrule Agregar_motivo_neutral
 (declare (salience 1))
@@ -514,9 +556,9 @@
 ;;;;;;; CONSEJOS FINALES
 
 ; Si hemos recomendado una rama pero no hay consejos de relevancia media-alta,
-; añadimos todos los de relevancia baja.
+; añadimos alguno de relevancia baja.
 
-(defrule Agregar_motivo_poco_importante
+(defrule Agregar_motivo_poco_importante_2
 ?f <- (Consejo ?rama ?motivo ?experto)
 ?g <- (Agregar_motivo ?cosa ?rama ?puntos)
 (Evaluacion ?cosa ?eval_abreviado)
@@ -524,11 +566,14 @@
 (test (< ?puntos 5))
 (Abreviado ?cosa ?eval_abreviado ?eval)
 (not (Agregado ?cosa ?rama)) ; Para que 'futuro' solo se agregue una vez
-(test (eq ?motivo ""))
+(or
+  (test (eq ?motivo ""))
+  (Agregar_poco_importantes ?rama))
 =>
 (retract ?f ?g)
 (bind ?motivo_nuevo (format nil (str-cat ?motivo "  * " ?texto ?eval "%n")))
 (assert
+  (Agregar_poco_importantes ?rama)
   (Consejo ?rama ?motivo_nuevo ?experto)
   (Agregado ?cosa ?rama))
 )
@@ -550,9 +595,10 @@
 (declare (salience -1))
 (Consejo ?rama ?motivo ?experto)
 (Nombre_rama ?rama ?nombre)
+(Descripcion ?rama ?desc)
 =>
 (printout t crlf "Recomendacion: " ?nombre crlf "-------------------------------------------------"
-  crlf "Experto: " ?experto crlf "Motivos: " crlf ?motivo)
+  crlf "Descripcion de la rama: " ?desc crlf "Experto: " ?experto crlf "Motivos: " crlf ?motivo)
 )
 
 (defrule No_recomendar
