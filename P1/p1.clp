@@ -20,7 +20,7 @@
 
 (deffacts Descripciones
 (Descripcion CSI (format nil "En esta rama hay una gran exigencia tanto a nivel de matematicas
-como de programacion, pero se puede sobrellevar siendo trabajador. Deberías tener una buena nota.
+como de programacion, pero se puede sobrellevar siendo trabajador. Deberias tener una buena nota.
 Es una buena forma de acabar como docente."))
 (Descripcion IS (format nil "Si te gusta la programacion y no tienes ningun otro interes
 particular, esta rama es una buena eleccion, aunque no vas a ver mucho sobre hardware.
@@ -72,8 +72,7 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 (assert
   (Abreviado ?cosa bajo "bajo")
   (Abreviado ?cosa medio "medio")
-  (Abreviado ?cosa alto "alto")
-  (Abreviado ?cosa desconocido "desconocido"))
+  (Abreviado ?cosa alto "alto"))
 )
 
 (defrule Abreviado_resto_num_fem
@@ -100,13 +99,13 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 
 (deffacts Contribucion
 ; CSI
-(Contribuye mat CSI 1)
+(Contribuye mat CSI 0.75)
 (Contribuye prog CSI 0.75)
 (Contribuye nota CSI 0.75)
 (Contribuye trabajador CSI 0.75)
 (Contribuye docencia CSI 0.5)
 ; IS
-(Contribuye mat IS 0.75)
+(Contribuye mat IS 0.6)
 (Contribuye prog IS 1)
 (Contribuye nota IS 0.75)
 (Contribuye docencia IS 0.5)
@@ -183,7 +182,8 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 (printout t "Bienvenido al sistema de ayuda de eleccion de rama. Te hare una serie " crlf
   "de preguntas y te recomendare una(s) rama(s) como lo haria un estudiante. Si a cualquier " crlf
   "pregunta numerica contestas '-1' o a cualquier pregunta categorica contestas 'X', el " crlf
-  "sistema parara de hacer preguntas." crlf)
+  "sistema parara de hacer preguntas. Ademas, en las preguntas numericas si contestas " crlf
+  "un numero mayor que 10, es equivalente a contestar 'no se'." crlf)
 )
 
 (defrule Modo
@@ -294,8 +294,6 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 
 ;;;;;; TRANSFORMAR VARIABLES CATEGÓRICAS A NUMÉRICAS
 
-; Si la respuesta es "No se", no sumamos a nada
-
 (defrule Transforma_futuro_docencia
 (declare (salience 2))
 (Evaluacion futuro D)
@@ -325,6 +323,8 @@ No veras muchas matematicas y podras trabajar donde quieras."))
   (Respuesta_num publica 0)
   (Respuesta_num empresa 10))
 )
+
+; Si la respuesta es "No se", no sumamos a nada
 
 (defrule Transforma_resto_S
 (declare (salience 2))
@@ -367,7 +367,7 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 (declare (salience 2))
 (Respuesta_num ?cosa ?n)
 ?f <- (Evaluacion ?cosa desconocido)
-(test (>= ?n 8))
+(test (and (>= ?n 8) (<= ?n 10)))
 =>
 (retract ?f)
 (assert (Evaluacion ?cosa alto))
@@ -378,10 +378,11 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 
 (defrule Sumar_puntos_futuro_directo
 (declare (salience 1))
-(Respuesta_num ?cosa & docencia|publica|empresa ?n & :(>= ?n 5))
+(Respuesta_num ?cosa & docencia|publica|empresa ?n)
 (Contribuye ?cosa ?rama ?factor)
 ?f <- (Puntuacion ?rama ?m)
 (not (Sumado ?cosa ?rama))
+(test (and (>= ?n 5) (<= ?n 10)))
 =>
 (retract ?f)
 (bind ?puntos (* ?factor ?n))
@@ -405,10 +406,11 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 
 (defrule Sumar_puntos_resto_directo
 (declare (salience 1))
-(Respuesta_num ?cosa ?n & :(>= ?n 5))
+(Respuesta_num ?cosa ?n)
 (Contribuye ?cosa ?rama ?factor)
 ?f <- (Puntuacion ?rama ?m)
 (not (Sumado ?cosa ?rama))
+(test (and (>= ?n 5) (<= ?n 10)))
 =>
 (retract ?f)
 (bind ?puntos (* ?factor ?n))
@@ -605,5 +607,5 @@ No veras muchas matematicas y podras trabajar donde quieras."))
 (declare (salience -1))
 (not (Consejo ? ? ?))
 =>
-(printout t crlf "No hay ninguna recomendacion" crlf)
+(printout t crlf "No tengo informacion suficiente para hacer ninguna recomendacion" crlf)
 )
