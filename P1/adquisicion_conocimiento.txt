@@ -1,0 +1,3 @@
+Para que los motivos no sean una enumeración de todas las respuestas, solo se muestran
+aquellos que han tenido una influencia media o alta. Si no hay, se muestra uno con
+influencia baja.
