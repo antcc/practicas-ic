@@ -181,7 +181,7 @@
   (deffacts Contribuciones_inversas
   ; CSI
   (Contribuye_inv hw CSI 1)
-  (Contribuye_inv web CSI 1)
+  (Contribuye_inv web CSI 0.9)
   ; IS
   (Contribuye_inv hw IS 1.5)
   (Contribuye_inv bbdd IS 0.75)
