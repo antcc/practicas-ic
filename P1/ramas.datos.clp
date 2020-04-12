@@ -8,6 +8,22 @@
 ;;; Antonio Coin Castro.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;
+;;;;;; CONTROL DE LOS MODULOS
+;;;;;;
+
+(deffacts Control_modulos
+(Lista_modulos Inicializar Preguntar Puntuar Aconsejar)
+)
+
+(defrule Avanza_modulo
+?f <- (Lista_modulos ?siguiente $?resto)
+=>
+(focus ?siguiente)
+(retract ?f)
+(assert (Lista_modulos $?resto))
+)
+
 
 ;;;;;;
 ;;;;;; MODULO PARA HECHOS ESTATICOS

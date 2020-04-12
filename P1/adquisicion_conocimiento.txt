@@ -1,5 +1,24 @@
-Para que los motivos no sean una enumeración de todas las respuestas, solo se muestran
-aquellos que han tenido una influencia media o alta. Si no hay, se muestra uno con
-influencia baja.
+El compañero consultado que hace de experto para las recomendaciones es Javier Sáez.
+El conocimiento se ha adquirido a través de una entrevista (la que se realizó para
+una tarea de teoría que entregamos), y usando también algunas técnicas de las vistas
+en clase como el emparrillado y la construcción de un árbol de clasificación.
 
-hay un pequeño sesgo a recomendar CSI, ya que es la rama que cursa el experto.
+Las conclusiones extraidas son que el experto propone una serie de factores a tener
+en cuenta para recomendar cada rama, y se puntua cada uno según la contribución
+que el experto estima que tienen a cada rama. Esta contribución puede ser directa o inversa.
+Como es necesario tener en cuenta que podemos tener información incompleta, decidimos
+recomendar la rama que mayor puntuación tenga en el momento de dejar de hacer las preguntas.
+También incluimos recomendaciones "manuales" basadas en el conocimiento del experto (por
+ejemplo, si te gusta el hardware siempre te recomendará la rama de Ingeniería de Computadores).
+
+Junto a las recomendaciones hechas se exponen los motivos. Para que estos no sean una enumeración
+de todas las respuestas, se permite elegir si se muestran solo aquellos que han tenido una
+influencia media o alta.
+
+Para ejecutar el programa, seguimos la siguiente secuencia lógica de instrucciones:
+
+(clear)
+(load ramas.datos.clp)
+(load ramas.clp)
+(reset)
+(run)
