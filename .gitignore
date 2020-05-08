@@ -1,4 +1,6 @@
 resources/
 Varios/*.pdf
-Incertidumbre/
+Incertidumbre/*.pdf
+Incertidumbre/FuzzyLogic.clp
+Incertidumbre/RedBayesiana.clp
 3Raya/*.pdf
