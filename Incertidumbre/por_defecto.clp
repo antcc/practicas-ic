@@ -21,7 +21,7 @@
   (assert (animal ?x))
   (bind ?expl (str-cat "sabemos que un " ?x " es un animal porque "
     "las aves son un tipo de animal"))
-  (assert (explicacion ave ?x ?expl))
+  (assert (explicacion animal ?x ?expl))
 )
 
 ; Los mamíferos son animales
