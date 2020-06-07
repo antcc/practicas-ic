@@ -31,6 +31,15 @@
   (equivalencia_area HW "Hardware")
 )
 
+(deffacts Asignaturas_favoritas
+  (Asigantura_fav MAC)
+  (Explicacion_fav MAC "Es la asignatura favorita del experto y la recomineda siempre.%n  Considera que es una asignatura esencial para todo ingenier@ informatic@,%n  a pesar de su dificultad")
+)
+
+(deffacts Por_defecto
+  (Por_defecto programacion alta)
+  (Por_defecto practicas media))
+
 ; Definimos las asignaturas que conoce el experto
 (deffacts Asignaturas
   (asignatura
@@ -59,6 +68,15 @@
     (carga alta)
     (tipo teorica)
     (programar alta)
+    (areas IA))
+  (asignatura
+    (id MAC)
+    (nombre "Modelos Avanzados de Computacion")
+    (curso 3)
+    (dificultad alta)
+    (carga media)
+    (tipo teorica)
+    (programar baja)
     (areas IA))
 )
 

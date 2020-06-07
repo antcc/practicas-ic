@@ -269,14 +269,20 @@
 ; MÓDULO RAZONAR_RECOMENDAR_ASIG
 ;
 
-(defrule Iniciar_puntuacion
+(defrule Inicializar
   (declare (salience 2))
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (T1 ListaAsig $?lasig)
   =>
+  (assert
+    (T1 CreditosRecomendados 0)
+    (T1 AsigRecomendadas))
   (do-for-all-facts ((?f asignatura))
     (neq (member$ ?f:id $?lasig) FALSE)
-      (assert (T1 Puntos ?f:id 0)))
+      (assert
+        (T1 Puntos ?f:id 0)
+        (T1 motivos-pos ?f:id "")
+        (T1 motivos-neg ?f:id "")))
 )
 
 (deffunction add-explicacion (?sentido ?id ?expl)
@@ -342,7 +348,7 @@
       (and (neq (member$ ?f:id $?lasig) FALSE) (neq (member$ ?a ?f:areas) FALSE))
         (do-for-all-facts ((?g equivalencia_area)) (eq ?a (nth$ 1 ?g:implied))
             (bind ?a_equiv (nth$ 2 ?g:implied))
-            (add-explicacion positiva ?f:id (str-cat "Es afin al area de conocimiento " ?a_equiv " que has indicado que te gusta"))
+            (add-explicacion positiva ?f:id (str-cat "Es afin al area de conocimiento " ?a_equiv ", que has indicado que te gusta"))
             (assert
               (contar ?f:id 1 por_area (nth ?i $?la))))))
 )
@@ -356,17 +362,147 @@
   (assert (T1 Puntos ?id (+ ?n ?s)))
 )
 
-; Dar opción de ver algunas razones negativas relevantes DE LAS ASIG NO ELEGIDAS.
-; mostrar solo las que no sean vacias. TODO: añadir reglas negativas
+(defrule Puntos_asignatura_favorita
+  (modulo RAZONAR_RECOMENDAR_ASIG)
+  (Asigantura_fav ?id)
+  (Explicacion_fav ?id ?expl)
+  ?f <- (T1 Puntos ?id ?n)
+  (not (T1 Contada_fav ?id))
+  =>
+  (retract ?f)
+  (assert
+    (T1 Puntos ?id (+ ?n 100))
+    (T1 Contada_fav ?id))
+  (add-explicacion positiva ?id ?expl)
+)
 
-; TODO assert Preguntar cuando acabe
-; TODO acumular explicaciones positivas y negativas
-; TODO: borrar todos los facts generados cuando acabe (Limpiar_temp)
-(defrule Recomendar
+(defrule Max_puntos
   (declare (salience -1))
+  (modulo RAZONAR_RECOMENDAR_ASIG)
+  ?f <- (T1 Puntos ?id ?n)
+  ?g <- (T1 CreditosRecomendados ?c)
+  ?h <- (T1 AsigRecomendadas $?actual)
+  (T1 Creditos ?c_tot)
+  (not
+    (and
+      (T1 Puntos ?otro_id ?m)
+      (test (> ?m ?n))))
+  =>
+  (retract ?f)
+  (bind ?asig (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id ?id)))))
+  (bind ?asig_id (fact-slot-value ?asig id))
+  (bind ?asig_cred (fact-slot-value ?asig creditos))
+  (bind ?new_c (+ ?c ?asig_cred))
+  (if (<= ?new_c ?c_tot) then
+    (retract ?g ?h)
+    (assert
+      (T1 CreditosRecomendados ?new_c)
+      (T1 AsigRecomendadas $?actual ?asig_id)))
+)
+
+(defrule Avanzar_recomendador
+  (declare (salience -2))
   ?f <- (modulo RAZONAR_RECOMENDAR_ASIG)
   =>
-  (printout t "Aqui iria la recomendacion" crlf)
+  (retract ?f)
+  (assert (modulo RECOMENDAR_RECOMENDAR_ASIG))
+)
+
+
+;
+; MODULO DE RECOMENDACIONES
+;
+
+(defrule Juntar_motivos_positivos
+  (declare (salience 1))
+  (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  ?f <- (T1 explicacion-positiva ?id ?expl)
+  ?g <- (T1 motivos-pos ?id ?mot)
+  =>
+  (retract ?f ?g)
+  (assert (T1 motivos-pos ?id (format nil (str-cat ?mot "  * " ?expl "%n"))))
+)
+
+(defrule Juntar_motivos_negativos
+  (declare (salience 1))
+  (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  ?f <- (T1 explicacion-negativa ?id ?expl)
+  ?g <- (T1 motivos-neg ?id ?mot)
+  =>
+  (retract ?f ?g)
+  (assert (T1 motivos-neg ?id (format nil (str-cat ?mot "  * " ?expl "%n"))))
+)
+
+(defrule Recomendar
+  (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  (T1 Creditos ?c_orig)
+  (T1 CreditosRecomendados ?c)
+  (T1 AsigRecomendadas $?lasig)
+  =>
+  (printout t "Numero de creditos que te recomiendo matricular: " ?c crlf)
+  (if (> ?c_orig ?c) then
+    (printout t "(No te puedo recomendar los " ?c_orig " creditos que querias con la lista " crlf
+                "de asignaturas que me has dado)" crlf))
+  (printout t "Aqui esta la lista de asignaturas que te recomiendo, ordenada de forma que " crlf
+              "conforme mas arriba este, mas fuerte es la recomendacion:" crlf)
+  (loop-for-count (?i 1 (length$ $?lasig))
+    (bind ?asig
+      (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig))))))
+    (bind ?motivo (fact-index (nth$ 1
+      (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-pos) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
+    (printout t crlf "Recomendacion: " (fact-slot-value ?asig nombre) crlf "---------------------------------------"
+     crlf "Experto: Javier Saez" crlf "Motivos: " crlf (nth$ 3 (fact-slot-value ?motivo implied))))
+)
+
+(defrule Pregunta_mostrar_motivos_neg
+  (declare (salience -1))
+  (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  =>
+  (printout t crlf "Quieres ver los principales motivos por los que el resto de asignaturas" crlf
+              "no han sido recomendadas? (S/N): ")
+  (printout t "")
+  (if (eq (read) S) then
+    (assert (Mostrar_neg)))
+)
+
+;TODO: mostrar solo las que no sean vacias
+(defrule Mostrar_motivos_neg
+  (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  ?f <- (Mostrar_neg)
+  (T1 AsigRecomendadas $?lrec)
+  (T1 ListaAsig $?lasig)
+  =>
+  (bind ?vacio S)
+  (loop-for-count (?i 1 (length$ $?lasig))
+    (bind ?asig
+      (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig))))))
+    (if (eq (member$ (fact-slot-value ?asig id) $?lrec) FALSE) then
+      (bind ?motivo (fact-index (nth$ 1
+        (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-neg) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
+
+      (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
+      (if (<> (str-compare ?texto_mot "") 0) then
+        (bind ?vacio N)
+        (printout t (fact-slot-value ?asig nombre) crlf "---------------------------------------"
+      crlf "Motivos de rechazo: " ?texto_mot crlf crlf))))
+
+  (if (eq ?vacio N) then
+    (retract ?f))
+)
+
+(defrule No_neg
+  (declare (salience -1))
+  ?f <- (Mostrar_neg)
+  =>
+  (retract ?f)
+  (printout t "No hay motivos negativos. Simplemente las que te he recomendado tienen "
+              "mas motivos positivos." crlf crlf)
+)
+
+(defrule Volver_menu_recomendar
+  (declare (salience -2))
+  ?f <- (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  =>
   (retract ?f)
   (assert
     (modulo MENU_RECOMENDAR_ASIG)
