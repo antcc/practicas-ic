@@ -32,13 +32,17 @@
 )
 
 (deffacts Asignaturas_favoritas
-  (Asigantura_fav MAC)
-  (Explicacion_fav MAC "Es la asignatura favorita del experto y la recomineda siempre.%n  Considera que es una asignatura esencial para todo ingenier@ informatic@,%n  a pesar de su dificultad")
+  (Asignatura_fav MAC)
+  (Explicacion_fav MAC "Es la asignatura favorita del experto y la recomienda siempre.%n    Considera que es una asignatura esencial para todo ingenier@ informatic@, a pesar de su dificultad")
 )
 
 (deffacts Por_defecto
-  (Por_defecto programacion alta)
-  (Por_defecto practicas media))
+  (variable nota M)
+  (variable superados M)
+  (variable areas DS)
+  (variable capacidad M)
+  (variable programacion A)
+  (variable practicas M))
 
 ; Definimos las asignaturas que conoce el experto
 (deffacts Asignaturas

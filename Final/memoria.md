@@ -3,3 +3,4 @@
 - TODO: hacer menu en P1 para repetir.
 
 - excepción en asignatura favorita
+- dejar en blanco equivalente a 'NS' en areas
