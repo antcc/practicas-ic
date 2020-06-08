@@ -1,21 +1,15 @@
-; TODO: eliminar el modulo del deffacts
-
-(deffacts BORRAR
-  (modulo MENU_RECOMENDAR_ASIG)
-)
-
 ;
 ; MÓDULO MENU_RECOMENDAR_ASIG
 ;
 
-(defrule Activar_pregunta
+(defrule a_Activar_pregunta
   (modulo MENU_RECOMENDAR_ASIG)
   =>
   (assert (Preguntar))
 )
 
 ; Hacemos la pregunta
-(defrule Preguntar
+(defrule a_Preguntar
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (Preguntar)
   =>
@@ -29,7 +23,7 @@
 )
 
 ; Comprobamos que la opción esté entre las permitidas
-(defrule Opcion_no_valida
+(defrule a_Opcion_no_valida
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (OpcionElegida ?r)
   (not (Opciones $? ?r $?))
@@ -39,15 +33,15 @@
   (assert (Preguntar))
 )
 
-(defrule Volver_menu
-  (modulo MENU_RECOMENDAR_ASIG)
-  ?f <- (OpcionElegida c)
+(defrule a_Volver_menu_principal
+  ?f <- (modulo MENU_RECOMENDAR_ASIG)
+  ?g <- (OpcionElegida c)
   =>
-  (retract ?f)
-  (assert (Limpia_temp) (Salir))
+  (retract ?f ?g)
+  (assert (Resetear))
 )
 
-(defrule Muestra_asig
+(defrule a_Muestra_asig
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (OpcionElegida a)
   =>
@@ -58,7 +52,7 @@
   (assert (Preguntar))
 )
 
-(defrule Limpia_previo
+(defrule a_Limpia_previo
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (OpcionElegida b)
   =>
@@ -68,7 +62,7 @@
     (Preguntar_lista))
 )
 
-(defrule Pregunta_lista_asig
+(defrule a_Pregunta_lista_asig
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (Preguntar_lista)
   =>
@@ -79,7 +73,7 @@
     (Preguntar_cred))
 )
 
-(defrule Pregunta_cred
+(defrule a_Pregunta_cred
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (Preguntar_cred)
   =>
@@ -90,7 +84,7 @@
     (Preguntar_curso))
 )
 
-(defrule Pregunta_curso
+(defrule a_Pregunta_curso
   ?f <- (modulo MENU_RECOMENDAR_ASIG)
   ?g <- (Preguntar_curso)
   =>
@@ -103,7 +97,7 @@
 
 ;;; LIMPIEZA
 
-(defrule Limpia_temp
+(defrule a_Limpia_temp
   (declare (salience 1))
   (modulo MENU_RECOMENDAR_ASIG)
   (Limpia_temp)
@@ -112,7 +106,7 @@
   (retract ?f)
 )
 
-(defrule Termina_limpia_temp
+(defrule a_Termina_limpia_temp
   (declare (salience 1))
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (Limpia_temp)
@@ -121,20 +115,11 @@
   (retract ?f)
 )
 
-(defrule Salir
-  ?f <- (modulo MENU_RECOMENDAR_ASIG)
-  ?g <- (Salir)
-  =>
-  (retract ?f ?g)
-  (assert (modulo MENU_PRINCIPAL))
-)
-
-
 ;
 ; MÓDULO PREGUNTAR_RECOMENDAR_ASIG
 ;
 
-(defrule Mensaje_bienvenida
+(defrule a_Mensaje_bienvenida
   (declare (salience 1))
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   =>
@@ -142,7 +127,7 @@
     "de preguntas y te recomendare unas asignaturas como lo haria un estudiante. A las " crlf "preguntas categoricas puedes contestar Bajo/a (B), Medio/a (M), Alto/a (A) o No se (NS)." crlf "Si a cualquier pregunta numerica contestas '-1' o a cualquier pregunta categorica" crlf "contestas 'X', el sistema parara de hacer preguntas. Ademas, en las preguntas numericas" crlf "si contestas -2, es equivalente a contestar 'no se'." crlf)
 )
 
-(defrule Respuestas_por_defecto
+(defrule a_Respuestas_por_defecto
   (declare (salience 1))
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (variable ?cosa $?defecto)
@@ -154,7 +139,7 @@
 ;;; Si contesta '-1' a una pregunta numerica o 'X' a una categorica, paramos
 ;;; y pasamos al siguiente modulo.
 
-(defrule Parar_num
+(defrule a_Parar_num
   (declare (salience 1))
   ?f <- (T1 dato_num ? ?num & :(= ?num -1))
   =>
@@ -162,7 +147,7 @@
   (assert (T1 Parar_preguntas))
 )
 
-(defrule Parar_cat
+(defrule a_Parar_cat
   (declare (salience 1))
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   ?f <- (Parar)
@@ -175,7 +160,7 @@
 ;;; como (T1 dato_num ?factor ?valor), y las categoricas directamente con
 ;;; (T1 dato ?factor ?valor).
 
-(defrule Pregunta_1
+(defrule a_Pregunta_1
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (not (T1 Parar_preguntas))
   =>
@@ -185,7 +170,7 @@
     (assert (T1 dato_num nota ?x)))
 )
 
-(defrule Pregunta_2
+(defrule a_Pregunta_2
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (not (T1 Parar_preguntas))
   =>
@@ -196,7 +181,7 @@
 )
 
 ; Dejar en blanco es equivalente a responder NS
-(defrule Pregunta_3
+(defrule a_Pregunta_3
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (not (T1 Parar_preguntas))
   ?f <- (T1 dato areas por_defecto $?)
@@ -214,7 +199,7 @@
       (assert (T1 dato areas segura ?resp))))
 )
 
-(defrule Pregunta_4
+(defrule a_Pregunta_4
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (not (T1 Parar_preguntas))
   ?f <- (T1 dato capacidad por_defecto ?)
@@ -229,7 +214,7 @@
       (assert (T1 dato capacidad segura ?x))))
 )
 
-(defrule Pregunta_5
+(defrule a_Pregunta_5
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (not (T1 Parar_preguntas))
   ?f <- (T1 dato programacion por_defecto ?)
@@ -244,7 +229,7 @@
       (assert (T1 dato programacion segura ?x))))
 )
 
-(defrule Pregunta_6
+(defrule a_Pregunta_6
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (not (T1 Parar_preguntas))
   ?f <- (T1 dato practicas por_defecto ?)
@@ -261,7 +246,7 @@
 
 ;;; Transformamos variables numericas a categoricas
 
-(defrule Evalua_bajo
+(defrule a_Evalua_bajo
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   ?f <- (T1 dato_num ?cosa ?n)
   ?g <- (T1 dato ?cosa por_defecto ?)
@@ -272,7 +257,7 @@
   (assert (T1 dato ?cosa segura B))
 )
 
-(defrule Evalua_medio
+(defrule a_Evalua_medio
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   ?f <- (T1 dato_num ?cosa ?n)
   ?g <- (T1 dato ?cosa por_defecto ?)
@@ -284,7 +269,7 @@
   (assert (T1 dato ?cosa segura M))
 )
 
-(defrule Evalua_alto
+(defrule a_Evalua_alto
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   ?f <- (T1 dato_num ?cosa ?n)
   ?g <- (T1 dato ?cosa por_defecto ?)
@@ -295,7 +280,7 @@
   (assert (T1 dato ?cosa segura A))
 )
 
-(defrule Mensaje_por_defecto
+(defrule a_Mensaje_por_defecto
   (declare (salience -1))
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (T1 dato ?cosa por_defecto $?valores)
@@ -308,7 +293,7 @@
   (printout t crlf)
 )
 
-(defrule Avanzar_razonador
+(defrule a_Avanzar_razonador
   (declare (salience -2))
   ?f <- (modulo PREGUNTAR_RECOMENDAR_ASIG)
   =>
@@ -321,7 +306,7 @@
 ; MÓDULO RAZONAR_RECOMENDAR_ASIG
 ;
 
-(defrule Inicializar
+(defrule a_Inicializar
   (declare (salience 2))
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (T1 ListaAsig $?lasig)
@@ -345,7 +330,7 @@
           (T1 motivos-neg ?f:id ""))))
 )
 
-(defrule Retractar_curso_por_defecto
+(defrule a_Retractar_curso_por_defecto
   (declare (salience 1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
   ?f <- (T1 RecomendarCurso menor_igual)
@@ -360,7 +345,7 @@
               "cursos superiores" crlf)
 )
 
-(defrule Retractar_curso_por_defecto_motivos
+(defrule a_Retractar_curso_por_defecto_motivos
   (declare (salience 1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (T1 RecomendarCurso cualquiera)
@@ -370,7 +355,7 @@
   (assert (T1 ?mot ?id ""))
 )
 
-(defrule Retractar_curso_por_defecto_puntos
+(defrule a_Retractar_curso_por_defecto_puntos
   (declare (salience 1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (T1 RecomendarCurso cualquiera)
@@ -390,7 +375,7 @@
     (assert (T1 explicacion-negativa ?id ?expl ?defecto)))
 )
 
-(defrule Procesar_antecedentes
+(defrule a_Procesar_antecedentes
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (regla ?num antecedentes $?ant)
   =>
@@ -405,7 +390,7 @@
     (bind ?i (+ ?i 2)))
 )
 
-(defrule Check-antecedentes
+(defrule a_Check-antecedentes
   (modulo RAZONAR_RECOMENDAR_ASIG)
   ?f <- (T1 check-antecedente ?num ?caract ?valor)
   ?g <- (T1 seguridad ?num ?seg)
@@ -418,7 +403,7 @@
       (assert (T1 seguridad ?num por_defecto))))
 )
 
-(defrule Procesar_consecuentes
+(defrule a_Procesar_consecuentes
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (T1 ListaAsig $?lasig)
   (regla ?num consecuentes ?signo ?caract $?valores)
@@ -442,7 +427,7 @@
         (add-explicacion negativa ?id ?expl ?defecto))))
 )
 
-(defrule Contar_puntos_area
+(defrule a_Contar_puntos_area
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (T1 dato areas ?defecto $?la)
   (T1 ListaAsig $?lasig)
@@ -458,7 +443,7 @@
               (contar ?f:id 2 por_area (nth ?i $?la))))))
 )
 
-(defrule Contar_puntos
+(defrule a_Contar_puntos
   (modulo RAZONAR_RECOMENDAR_ASIG)
   ?f <- (contar ?id ?s $?)
   ?g <- (T1 Puntos ?id ?n)
@@ -467,7 +452,7 @@
   (assert (T1 Puntos ?id (+ ?n ?s)))
 )
 
-(defrule Puntos_asignatura_favorita
+(defrule a_Puntos_asignatura_favorita
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (Asignatura_fav ?id)
   (Explicacion_fav ?id ?expl)
@@ -481,7 +466,7 @@
   (add-explicacion positiva ?id ?expl seguro)
 )
 
-(defrule Max_puntos
+(defrule a_Max_puntos
   (declare (salience -1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
   ?f <- (T1 Puntos ?id ?n)
@@ -505,7 +490,7 @@
       (T1 AsigRecomendadas $?actual ?asig_id)))
 )
 
-(defrule Avanzar_recomendador
+(defrule a_Avanzar_recomendador
   (declare (salience -2))
   ?f <- (modulo RAZONAR_RECOMENDAR_ASIG)
   =>
@@ -518,7 +503,7 @@
 ; MODULO DE RECOMENDACIONES
 ;
 
-(defrule Juntar_motivos_positivos
+(defrule a_Juntar_motivos_positivos
   (declare (salience 1))
   (modulo RECOMENDAR_RECOMENDAR_ASIG)
   ?f <- (T1 explicacion-positiva ?id ?expl ?defecto)
@@ -531,7 +516,7 @@
   (assert (T1 motivos-pos ?id (format nil (str-cat ?mot "  " ?s " " ?expl "%n"))))
 )
 
-(defrule Juntar_motivos_negativos
+(defrule a_Juntar_motivos_negativos
   (declare (salience 1))
   (modulo RECOMENDAR_RECOMENDAR_ASIG)
   ?f <- (T1 explicacion-negativa ?id ?expl ?defecto)
@@ -544,7 +529,7 @@
   (assert (T1 motivos-neg ?id (format nil (str-cat ?mot "  " ?s " " ?expl "%n"))))
 )
 
-(defrule Recomendar
+(defrule a_Recomendar
   (modulo RECOMENDAR_RECOMENDAR_ASIG)
   (T1 Creditos ?c_orig)
   (T1 CreditosRecomendados ?c)
@@ -571,7 +556,7 @@
         (printout t "  * No hay motivos mas alla de que faltaban creditos por rellenar" crlf))))
 )
 
-(defrule Pregunta_mostrar_motivos_neg
+(defrule a_Pregunta_mostrar_motivos_neg
   (declare (salience -1))
   (modulo RECOMENDAR_RECOMENDAR_ASIG)
   =>
@@ -579,11 +564,10 @@
               "no han sido recomendadas? (S/N): ")
   (if (eq (read) S) then
     (assert (Mostrar_neg)))
-  (printout t "")
+  (printout t crlf)
 )
 
-;TODO: mostrar solo las que no sean vacias
-(defrule Mostrar_motivos_neg
+(defrule a_Mostrar_motivos_neg
   (modulo RECOMENDAR_RECOMENDAR_ASIG)
   ?f <- (Mostrar_neg)
   (T1 AsigRecomendadas $?lrec)
@@ -609,7 +593,7 @@
     (retract ?f))
 )
 
-(defrule No_neg
+(defrule a_No_neg
   (declare (salience -1))
   ?f <- (Mostrar_neg)
   =>
@@ -618,7 +602,7 @@
               "mas motivos positivos." crlf crlf)
 )
 
-(defrule Volver_menu_recomendar
+(defrule a_Volver_menu_recomendar
   (declare (salience -2))
   ?f <- (modulo RECOMENDAR_RECOMENDAR_ASIG)
   =>
