@@ -249,7 +249,7 @@
   (not (T1 Parar_preguntas))
   ?f <- (T1 dato practicas por_defecto ?)
   =>
-  (printout t "Como calificarias tu afinidad con las aplicaciones practicas? (B/M/A/NS): ")
+  (printout t "Como calificarias tu preferencia por las aplicaciones practicas frente a las teoricas? (B/M/A/NS): ")
   (bind ?x (read))
   (if (eq ?x X) then
     (assert (Parar))
@@ -337,11 +337,11 @@
         (assert
           (T1 Puntos ?f:id -1000)
           (T1 motivos-pos ?f:id "")
-          (T1 motivos-neg ?f:id (format nil "  + Esta asignatura es de un curso superior, y por defecto no te la recomiendo%n")))
+          (T1 motivos-neg ?f:id (format nil "  + Esta asignatura es de un curso superior, y por defecto no te la recomiendo primero%n")))
       else
         (assert
           (T1 Puntos ?f:id 0)
-          (T1 motivos-pos ?f:id (format nil "  + Por defecto te recomiendo asignaturas de tu curso o menor%n"))
+          (T1 motivos-pos ?f:id (format nil "  + Por defecto te recomiendo primero asignaturas de tu curso o menor%n"))
           (T1 motivos-neg ?f:id ""))))
 )
 
@@ -564,7 +564,7 @@
         (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-pos) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
       (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
       (printout t crlf "Recomendacion: " (fact-slot-value ?asig nombre) crlf "---------------------------------------"
-       crlf "Experto: Javier Saez" crlf "Motivos: " crlf)
+       crlf "Experto: Javier Saez" crlf "Curso: " (fact-slot-value ?asig curso) crlf "Motivos: " crlf)
       (if (<> (str-compare ?texto_mot "") 0) then
         (printout t ?texto_mot)
       else
@@ -603,7 +603,7 @@
         (if (<> (str-compare ?texto_mot "") 0) then
           (bind ?vacio N)
           (printout t (fact-slot-value ?asig nombre) crlf "---------------------------------------"
-          crlf "Experto: Javier Saez" crlf "Motivos de rechazo: " crlf ?texto_mot crlf)))))
+          crlf "Experto: Javier Saez" crlf "Curso: " (fact-slot-value ?asig curso) crlf "Motivos de rechazo: " crlf ?texto_mot crlf)))))
 
   (if (eq ?vacio N) then
     (retract ?f))
