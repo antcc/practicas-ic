@@ -156,20 +156,19 @@
 
 (defrule Parar_num
   (declare (salience 1))
-  ?f <- (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  ?g <- (T1 dato_num ? ?num & :(= ?num -1))
+  ?f <- (T1 dato_num ? ?num & :(= ?num -1))
   =>
-  (retract ?f ?g)
-  (assert (modulo RAZONAR_RECOMENDAR_ASIG))
+  (retract ?f)
+  (assert (T1 Parar_preguntas))
 )
 
 (defrule Parar_cat
   (declare (salience 1))
-  ?f <- (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  ?g <- (Parar)
+  (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  ?f <- (Parar)
   =>
-  (retract ?f ?g)
-  (assert (modulo RAZONAR_RECOMENDAR_ASIG))
+  (retract ?f)
+  (assert (T1 Parar_preguntas))
 )
 
 ;;; Realizamos todas las preguntas. Las respuestas numericas las representamos
@@ -178,6 +177,7 @@
 
 (defrule Pregunta_1
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  (not (T1 Parar_preguntas))
   =>
   (printout t "Cual es tu nota media? (5-10): ")
   (bind ?x (read))
@@ -187,16 +187,18 @@
 
 (defrule Pregunta_2
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  (not (T1 Parar_preguntas))
   =>
-  (printout t "Cuantos creditos has superado ya? (>=0): ")
+  (printout t "Cuantas horas al dia aparte de las clases le sueles dedicar a la carrera? (0-24): ")
   (bind ?x (read))
   (if (>= ?x -1) then
-    (assert (T1 dato_num superados ?x)))
+    (assert (T1 dato_num horas ?x)))
 )
 
 ; Dejar en blanco es equivalente a responder NS
 (defrule Pregunta_3
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  (not (T1 Parar_preguntas))
   ?f <- (T1 dato areas por_defecto $?)
   =>
   (printout t "Cual(es) de estas areas de la informatica te gusta(n) mas? " crlf)
@@ -214,6 +216,7 @@
 
 (defrule Pregunta_4
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  (not (T1 Parar_preguntas))
   ?f <- (T1 dato capacidad por_defecto ?)
   =>
   (printout t "Como calificarias tu capacidad de trabajo? (B/M/A/NS): ")
@@ -228,6 +231,7 @@
 
 (defrule Pregunta_5
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  (not (T1 Parar_preguntas))
   ?f <- (T1 dato programacion por_defecto ?)
   =>
   (printout t "Como calificarias tu gusto por la programacion? (B/M/A/NS): ")
@@ -242,6 +246,7 @@
 
 (defrule Pregunta_6
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  (not (T1 Parar_preguntas))
   ?f <- (T1 dato practicas por_defecto ?)
   =>
   (printout t "Como calificarias tu afinidad con las aplicaciones practicas? (B/M/A/NS): ")
@@ -290,11 +295,6 @@
   (assert (T1 dato ?cosa segura A))
 )
 
-
-
-;Aqui poner las cosas por defecto, junto a mensaje
-;(salience -1)
-
 (defrule Mensaje_por_defecto
   (declare (salience -1))
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
@@ -302,7 +302,7 @@
   (not (T1 Mensaje_mostrado ?cosa))
   =>
   (assert (T1 Mensaje_mostrado ?cosa))
-  (printout t "Asumo por defecto que el valor de '" ?cosa "' es: ")
+  (printout t "Estoy asumiendo por defecto que el valor de '" ?cosa "' es: ")
   (foreach ?v $?valores
     (printout t ?v " "))
   (printout t crlf)
@@ -349,18 +349,25 @@
   (declare (salience 1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
   ?f <- (T1 RecomendarCurso menor_igual)
-  ?g <- (T1 ?mot & motivos-pos|motivos-neg ?id ?expl & :(neq ?expl ""))
   (or
     (T1 dato nota segura A)
     (T1 dato capacidad segura A))
   =>
-  (retract ?f ?g)
-  (assert
-    (T1 RecomendarCurso cualquiera)
-    (T1 ?mot ?id ""))
+  (retract ?f)
+  (assert (T1 RecomendarCurso cualquiera))
   (printout t crlf "!! Como tienes una nota alta o una gran capacidad de trabajo, voy a" crlf
               "eliminar la restriccion por defecto de no recomendar asignaturas de" crlf
               "cursos superiores" crlf)
+)
+
+(defrule Retractar_curso_por_defecto_motivos
+  (declare (salience 1))
+  (modulo RAZONAR_RECOMENDAR_ASIG)
+  (T1 RecomendarCurso cualquiera)
+  ?f <- (T1 ?mot & motivos-pos|motivos-neg ?id ?expl & :(neq ?expl ""))
+  =>
+  (retract ?f)
+  (assert (T1 ?mot ?id ""))
 )
 
 (defrule Retractar_curso_por_defecto_puntos
@@ -389,7 +396,7 @@
   =>
   (assert
     (T1 seguridad ?num segura)
-    (T1 Procesar_consecuente ?num))
+    (T1 Procesar_consecuentes ?num))
   (bind ?i 1)
   (while TRUE do
     (if (> ?i (length $?ant)) then
@@ -411,28 +418,28 @@
       (assert (T1 seguridad ?num por_defecto))))
 )
 
-(defrule Procesar_consecuente
+(defrule Procesar_consecuentes
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (T1 ListaAsig $?lasig)
-  (regla ?num consecuente ?signo ?caract ?valor)
+  (regla ?num consecuentes ?signo ?caract $?valores)
   (regla ?num explicacion ?expl)
   (T1 seguridad ?num ?defecto)
-  ?f <- (T1 Procesar_consecuente ?num)
+  ?f <- (T1 Procesar_consecuentes ?num)
   (not (T1 check-antecedente ?num $?))
   =>
   (retract ?f)
-  (bind ?facts
-    (find-all-facts ((?f asignatura))
-      (and (neq (member$ ?f:id $?lasig) FALSE) (eq ?f:?caract ?valor))))
+  (foreach ?valor $?valores
+    (bind ?facts
+      (find-all-facts ((?f asignatura))
+        (and (neq (member$ ?f:id $?lasig) FALSE) (eq ?f:?caract ?valor))))
 
-  (loop-for-count (?i 1 (length$ ?facts))
-    (bind ?id (fact-slot-value (nth$ ?i ?facts) id))
-    (assert (contar ?id ?signo por_regla ?num))
-    (if (= ?signo 1) then
-      (add-explicacion positiva ?id ?expl ?defecto)
-    else
-      (add-explicacion negativa ?id ?expl ?defecto))
-  )
+    (loop-for-count (?i 1 (length$ ?facts))
+      (bind ?id (fact-slot-value (nth$ ?i ?facts) id))
+      (assert (contar ?id ?signo por_regla ?num))
+      (if (= ?signo 1) then
+        (add-explicacion positiva ?id ?expl ?defecto)
+      else
+        (add-explicacion negativa ?id ?expl ?defecto))))
 )
 
 (defrule Contar_puntos_area
@@ -546,21 +553,22 @@
   (printout t crlf "Numero de creditos que te recomiendo matricular: " ?c crlf)
   (if (> ?c_orig ?c) then
     (printout t "(No te puedo recomendar los " ?c_orig " creditos que querias con la lista " crlf
-                "de asignaturas que me has dado)" crlf))
-  (printout t "Aqui esta la lista de asignaturas que te recomiendo, ordenada de forma que " crlf
-              "conforme mas arriba este, mas fuerte es la recomendacion. Se indica con el simbolo '+' cuando el motivo" crlf "contenga informacion asumida por defecto." crlf)
-  (loop-for-count (?i 1 (length$ $?lasig))
-    (bind ?asig
-      (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig))))))
-    (bind ?motivo (fact-index (nth$ 1
-      (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-pos) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
-    (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
-    (printout t crlf "Recomendacion: " (fact-slot-value ?asig nombre) crlf "---------------------------------------"
-     crlf "Experto: Javier Saez" crlf "Motivos: " crlf)
-    (if (<> (str-compare ?texto_mot "") 0) then
-      (printout t ?texto_mot)
-    else
-      (printout t "  * No hay motivos mas alla de que faltaban creditos por rellenar" crlf)))
+                "de asignaturas que me has dado, bien porque no tengo informacion sobre suficientes asignaturas" crlf "o bien porque no hay suficientes para cubrir los creditos)" crlf))
+  (if (> (length$ $?lasig) 0) then
+    (printout t "Aqui esta la lista de asignaturas que te recomiendo, ordenada de forma que " crlf
+                "conforme mas arriba este, mas fuerte es la recomendacion. Se indica con el simbolo '+' cuando el motivo" crlf "contenga informacion asumida por defecto." crlf)
+    (loop-for-count (?i 1 (length$ $?lasig))
+      (bind ?asig
+        (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig))))))
+      (bind ?motivo (fact-index (nth$ 1
+        (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-pos) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
+      (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
+      (printout t crlf "Recomendacion: " (fact-slot-value ?asig nombre) crlf "---------------------------------------"
+       crlf "Experto: Javier Saez" crlf "Motivos: " crlf)
+      (if (<> (str-compare ?texto_mot "") 0) then
+        (printout t ?texto_mot)
+      else
+        (printout t "  * No hay motivos mas alla de que faltaban creditos por rellenar" crlf))))
 )
 
 (defrule Pregunta_mostrar_motivos_neg
@@ -580,20 +588,22 @@
   ?f <- (Mostrar_neg)
   (T1 AsigRecomendadas $?lrec)
   (T1 ListaAsig $?lasig)
+  (test (> (length$ $lrec) 0))
   =>
   (bind ?vacio S)
   (loop-for-count (?i 1 (length$ $?lasig))
-    (bind ?asig
-      (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig))))))
-    (if (eq (member$ (fact-slot-value ?asig id) $?lrec) FALSE) then
-      (bind ?motivo (fact-index (nth$ 1
-        (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-neg) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
+    (bind ?asig_addr (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig)))))
+    (if (neq ?asig_addr nil) then
+      (bind ?asig (fact-index ?asig_addr))
+      (if (eq (member$ (fact-slot-value ?asig id) $?lrec) FALSE) then
+        (bind ?motivo (fact-index (nth$ 1
+          (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-neg) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
 
-      (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
-      (if (<> (str-compare ?texto_mot "") 0) then
-        (bind ?vacio N)
-        (printout t crlf (fact-slot-value ?asig nombre) crlf "---------------------------------------"
-        crlf "Experto: Javier Saez" crlf "Motivos de rechazo: " crlf ?texto_mot crlf))))
+        (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
+        (if (<> (str-compare ?texto_mot "") 0) then
+          (bind ?vacio N)
+          (printout t crlf (fact-slot-value ?asig nombre) crlf "---------------------------------------"
+          crlf "Experto: Javier Saez" crlf "Motivos de rechazo: " crlf ?texto_mot crlf)))))
 
   (if (eq ?vacio N) then
     (retract ?f))

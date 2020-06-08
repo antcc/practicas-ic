@@ -4,3 +4,4 @@
 
 - excepción en asignatura favorita
 - dejar en blanco equivalente a 'NS' en areas
+- 6 asignaturas de cada rama (3 por curso)
