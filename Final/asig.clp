@@ -455,7 +455,7 @@
             (bind ?a_equiv (nth$ 2 ?g:implied))
             (add-explicacion positiva ?f:id (str-cat "Es afin al area de conocimiento " ?a_equiv ", asi que creo que te gustaran los contenidos" ) ?defecto)
             (assert
-              (contar ?f:id 1 por_area (nth ?i $?la))))))
+              (contar ?f:id 2 por_area (nth ?i $?la))))))
 )
 
 (defrule Contar_puntos
@@ -577,9 +577,9 @@
   =>
   (printout t crlf "Quieres ver los principales motivos por los que el resto de asignaturas" crlf
               "no han sido recomendadas? (S/N): ")
-  (printout t "")
   (if (eq (read) S) then
     (assert (Mostrar_neg)))
+  (printout t "")
 )
 
 ;TODO: mostrar solo las que no sean vacias
@@ -602,7 +602,7 @@
         (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
         (if (<> (str-compare ?texto_mot "") 0) then
           (bind ?vacio N)
-          (printout t crlf (fact-slot-value ?asig nombre) crlf "---------------------------------------"
+          (printout t (fact-slot-value ?asig nombre) crlf "---------------------------------------"
           crlf "Experto: Javier Saez" crlf "Motivos de rechazo: " crlf ?texto_mot crlf)))))
 
   (if (eq ?vacio N) then
