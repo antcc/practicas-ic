@@ -599,6 +599,7 @@
   =>
   (printout t crlf "Escribe cualquier cosa para volver al menu principal... ")
   (read)
+  (printout t crlf)
   (retract ?f)
   (assert (Resetear))
 )
