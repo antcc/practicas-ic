@@ -1,6 +1,15 @@
-;
-; MÓDULO MENU_RECOMENDAR_ASIG
-;
+;;;;;;;;;;;;;;;; RECOMENDACION DE UNA ASIGNATURA (REGLAS) ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Reglas y sistema de razonamiento para el problema de recomendar
+;;; una asignatura de Ingenieria Informatica como lo haria un estudiante.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ingenieria del Conocimiento. Curso 2019/20.
+;;; Antonio Coin Castro.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;
+;;;;;; MODULO PARA EL SUBMENU
+;;;;;;
 
 (defrule a_Activar_pregunta
   (modulo MENU_RECOMENDAR_ASIG)
@@ -8,7 +17,7 @@
   (assert (Preguntar))
 )
 
-; Hacemos la pregunta
+; Mostramos las opciones del menu
 (defrule a_Preguntar
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (Preguntar)
@@ -22,7 +31,7 @@
   (assert (OpcionElegida (read)))
 )
 
-; Comprobamos que la opción esté entre las permitidas
+; Comprobamos que la opción este entre las permitidas
 (defrule a_Opcion_no_valida
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (OpcionElegida ?r)
@@ -33,6 +42,7 @@
   (assert (Preguntar))
 )
 
+; Opcion c: volver al menu principal
 (defrule a_Volver_menu_principal
   ?f <- (modulo MENU_RECOMENDAR_ASIG)
   ?g <- (OpcionElegida c)
@@ -41,6 +51,7 @@
   (assert (Resetear))
 )
 
+; Opcion a: mostrar lista de asignaturas
 (defrule a_Muestra_asig
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (OpcionElegida a)
@@ -52,72 +63,69 @@
   (assert (Preguntar))
 )
 
+; Opcion b: limpiar calculos previos y comenzar sistema recomendador
 (defrule a_Limpia_previo
   (modulo MENU_RECOMENDAR_ASIG)
   ?f <- (OpcionElegida b)
   =>
   (retract ?f)
   (assert
-    (Limpia_temp)
-    (Preguntar_lista))
-)
-
-(defrule a_Pregunta_lista_asig
-  (modulo MENU_RECOMENDAR_ASIG)
-  ?f <- (Preguntar_lista)
-  =>
-  (printout t "Escribe los codigos de las asignaturas posibles (separados por espacios): ")
-  (retract ?f)
-  (assert
-    (T1 ListaAsig (explode$ (readline)))
-    (Preguntar_cred))
-)
-
-(defrule a_Pregunta_cred
-  (modulo MENU_RECOMENDAR_ASIG)
-  ?f <- (Preguntar_cred)
-  =>
-  (printout t "Escribe los creditos totales a matricular: ")
-  (retract ?f)
-  (assert
-    (T1 Creditos (read))
-    (Preguntar_curso))
-)
-
-(defrule a_Pregunta_curso
-  ?f <- (modulo MENU_RECOMENDAR_ASIG)
-  ?g <- (Preguntar_curso)
-  =>
-  (printout t "Cuantos cursos llevas en la carrera? (0+): ")
-  (retract ?f ?g)
-  (assert
-    (T1 Curso (read))
-    (modulo PREGUNTAR_RECOMENDAR_ASIG))
+    (Limpia_temp))
 )
 
 ;;; LIMPIEZA
 
+; Limpia todos los hechos que comienzan con RA
 (defrule a_Limpia_temp
-  (declare (salience 1))
   (modulo MENU_RECOMENDAR_ASIG)
   (Limpia_temp)
-  ?f <- (T1 $?)
+  ?f <- (RA $?)
   =>
   (retract ?f)
 )
 
-(defrule a_Termina_limpia_temp
-  (declare (salience 1))
-  (modulo MENU_RECOMENDAR_ASIG)
-  ?f <- (Limpia_temp)
-  (not (T1 $?))
+(defrule a_Avanza_preguntas
+  ?f <- (modulo MENU_RECOMENDAR_ASIG)
+  ?g <- (Limpia_temp)
+  (not (RA $?))
   =>
-  (retract ?f)
+  (retract ?f ?g)
+  (assert (modulo PREGUNTAR_RECOMENDAR_ASIG))
 )
 
-;
-; MÓDULO PREGUNTAR_RECOMENDAR_ASIG
-;
+;;;;;;
+;;;;;; MODULO PARA LAS PREGUNTAS DE CARACTERISTICAS
+;;;;;;
+
+; Primera pregunta obligatoria: lista de asignaturas a matricular
+(defrule a_Pregunta_lista_asig
+  (declare (salience 2))
+  (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  =>
+  (printout t "Escribe los codigos de las asignaturas posibles (separados por espacios): ")
+  (assert
+    (RA ListaAsig (explode$ (readline))))
+)
+
+; Segunda pregunta obligatoria: numero de creditos a matricular
+(defrule a_Pregunta_cred
+  (declare (salience 2))
+  (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  =>
+  (printout t "Escribe los creditos totales a matricular: ")
+  (assert
+    (RA Creditos (read)))
+)
+
+; Tercera pregunta obligatoria: curso actual del estudiante
+(defrule a_Pregunta_curso
+  (declare (salience 2))
+  (modulo PREGUNTAR_RECOMENDAR_ASIG)
+  =>
+  (printout t "En que curso estas?: ")
+  (assert
+    (RA Curso (read)))
+)
 
 (defrule a_Mensaje_bienvenida
   (declare (salience 1))
@@ -127,24 +135,24 @@
     "de preguntas y te recomendare unas asignaturas como lo haria un estudiante. A las " crlf "preguntas categoricas puedes contestar Bajo/a (B), Medio/a (M), Alto/a (A) o No se (NS)." crlf "Si a cualquier pregunta numerica contestas '-1' o a cualquier pregunta categorica" crlf "contestas 'X', el sistema parara de hacer preguntas. Ademas, en las preguntas numericas" crlf "si contestas -2, es equivalente a contestar 'no se'." crlf)
 )
 
+; Razonamiento por defecto: valores de las variables por defecto
 (defrule a_Respuestas_por_defecto
   (declare (salience 1))
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
   (variable ?cosa $?defecto)
-  (not (T1 dato ?cosa $?))
+  (not (RA dato ?cosa $?))
   =>
-  (assert (T1 dato ?cosa por_defecto $?defecto))
+  (assert (RA dato ?cosa por_defecto $?defecto))
 )
 
 ;;; Si contesta '-1' a una pregunta numerica o 'X' a una categorica, paramos
-;;; y pasamos al siguiente modulo.
 
 (defrule a_Parar_num
   (declare (salience 1))
-  ?f <- (T1 dato_num ? ?num & :(= ?num -1))
+  ?f <- (RA dato_num ? ?num & :(= ?num -1))
   =>
   (retract ?f)
-  (assert (T1 Parar_preguntas))
+  (assert (RA Parar_preguntas))
 )
 
 (defrule a_Parar_cat
@@ -153,56 +161,60 @@
   ?f <- (Parar)
   =>
   (retract ?f)
-  (assert (T1 Parar_preguntas))
+  (assert (RA Parar_preguntas))
 )
 
 ;;; Realizamos todas las preguntas. Las respuestas numericas las representamos
-;;; como (T1 dato_num ?factor ?valor), y las categoricas directamente con
-;;; (T1 dato ?factor ?valor).
+;;; como (RA dato_num ?factor ?valor), y las categoricas directamente con
+;;; (RA dato ?factor ?valor). Si se da una respuesta, se retractan los valores por defecto
 
 (defrule a_Pregunta_1
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  (not (T1 Parar_preguntas))
+  (not (RA Parar_preguntas))
   =>
   (printout t "Cual es tu nota media? (5-10): ")
   (bind ?x (read))
   (if (>= ?x -1) then
-    (assert (T1 dato_num nota ?x)))
+    (assert (RA dato_num nota ?x)))
 )
 
 (defrule a_Pregunta_2
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  (not (T1 Parar_preguntas))
+  (not (RA Parar_preguntas))
   =>
   (printout t "Cuantas horas al dia aparte de las clases le sueles dedicar a la carrera? (0-24): ")
   (bind ?x (read))
   (if (>= ?x -1) then
-    (assert (T1 dato_num horas ?x)))
+    (assert (RA dato_num horas ?x)))
 )
 
 ; Dejar en blanco es equivalente a responder NS
 (defrule a_Pregunta_3
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  (not (T1 Parar_preguntas))
-  ?f <- (T1 dato areas por_defecto $?)
+  (not (RA Parar_preguntas))
+  ?f <- (RA dato areas por_defecto $?)
   =>
   (printout t "Cual(es) de estas areas de la informatica te gusta(n) mas? " crlf)
+  ; Buscamos los hechos 'equivalencia_area', usando el campo 'implied'
+  ; porque son ordered facts
   (do-for-all-facts ((?f equivalencia_area)) TRUE
     (printout t "  - " (nth$ 2 ?f:implied) " (" (nth$ 1 ?f:implied) ")" crlf))
   (printout t "Respuesta (separadas por espacios): ")
+  ; Leemos la respuesta como multifield
   (bind ?resp (explode$ (readline)))
   (if (eq (nth$ 1 ?resp) X) then
     (assert (Parar))
   else
+    ; Si no es vacio ni 'NS', guardamos la respuesta
     (if (and (neq (nth$ 1 ?resp) NS) (neq (nth$ 1 ?resp) nil)) then
       (retract ?f)
-      (assert (T1 dato areas segura ?resp))))
+      (assert (RA dato areas segura ?resp))))
 )
 
 (defrule a_Pregunta_4
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  (not (T1 Parar_preguntas))
-  ?f <- (T1 dato capacidad por_defecto ?)
+  (not (RA Parar_preguntas))
+  ?f <- (RA dato capacidad por_defecto ?)
   =>
   (printout t "Como calificarias tu capacidad de trabajo? (B/M/A/NS): ")
   (bind ?x (read))
@@ -211,13 +223,13 @@
   else
     (if (neq ?x NS) then
       (retract ?f)
-      (assert (T1 dato capacidad segura ?x))))
+      (assert (RA dato capacidad segura ?x))))
 )
 
 (defrule a_Pregunta_5
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  (not (T1 Parar_preguntas))
-  ?f <- (T1 dato programacion por_defecto ?)
+  (not (RA Parar_preguntas))
+  ?f <- (RA dato programacion por_defecto ?)
   =>
   (printout t "Como calificarias tu gusto por la programacion? (B/M/A/NS): ")
   (bind ?x (read))
@@ -226,13 +238,13 @@
   else
     (if (neq ?x NS) then
       (retract ?f)
-      (assert (T1 dato programacion segura ?x))))
+      (assert (RA dato programacion segura ?x))))
 )
 
 (defrule a_Pregunta_6
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  (not (T1 Parar_preguntas))
-  ?f <- (T1 dato practicas por_defecto ?)
+  (not (RA Parar_preguntas))
+  ?f <- (RA dato practicas por_defecto ?)
   =>
   (printout t "Como calificarias tu preferencia por las aplicaciones practicas frente a las teoricas? (B/M/A/NS): ")
   (bind ?x (read))
@@ -241,58 +253,61 @@
   else
     (if (neq ?x NS) then
       (retract ?f)
-      (assert (T1 dato practicas segura ?x))))
+      (assert (RA dato practicas segura ?x))))
 )
 
-;;; Transformamos variables numericas a categoricas
+;;; Transformamos variables numericas a categoricas para los datos seguros
+;;; Seguimos los umbrales establecidos en los hechos 'equivalencia_cat'
 
 (defrule a_Evalua_bajo
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  ?f <- (T1 dato_num ?cosa ?n)
-  ?g <- (T1 dato ?cosa por_defecto ?)
+  ?f <- (RA dato_num ?cosa ?n)
+  ?g <- (RA dato ?cosa por_defecto ?)
   (equivalencia_cat ?cosa u1 ?x)
   (test (< ?n ?x))
   =>
   (retract ?f ?g)
-  (assert (T1 dato ?cosa segura B))
+  (assert (RA dato ?cosa segura B))
 )
 
 (defrule a_Evalua_medio
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  ?f <- (T1 dato_num ?cosa ?n)
-  ?g <- (T1 dato ?cosa por_defecto ?)
+  ?f <- (RA dato_num ?cosa ?n)
+  ?g <- (RA dato ?cosa por_defecto ?)
   (equivalencia_cat ?cosa u1 ?x1)
   (equivalencia_cat ?cosa u2 ?x2)
   (test (and (>= ?n ?x1) (< ?n ?x2)))
   =>
   (retract ?f ?g)
-  (assert (T1 dato ?cosa segura M))
+  (assert (RA dato ?cosa segura M))
 )
 
 (defrule a_Evalua_alto
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  ?f <- (T1 dato_num ?cosa ?n)
-  ?g <- (T1 dato ?cosa por_defecto ?)
+  ?f <- (RA dato_num ?cosa ?n)
+  ?g <- (RA dato ?cosa por_defecto ?)
   (equivalencia_cat ?cosa u2 ?x)
   (test (>= ?n ?x))
   =>
   (retract ?f ?g)
-  (assert (T1 dato ?cosa segura A))
+  (assert (RA dato ?cosa segura A))
 )
 
+; Mostramos los valores que estamos finalmente asumiendo por defecto (si hay alguno)
 (defrule a_Mensaje_por_defecto
   (declare (salience -1))
   (modulo PREGUNTAR_RECOMENDAR_ASIG)
-  (T1 dato ?cosa por_defecto $?valores)
-  (not (T1 Mensaje_mostrado ?cosa))
+  (RA dato ?cosa por_defecto $?valores)
+  (not (RA Mensaje_mostrado ?cosa))
   =>
-  (assert (T1 Mensaje_mostrado ?cosa))
-  (printout t "Estoy asumiendo por defecto que el valor de '" ?cosa "' es: ")
+  (assert (RA Mensaje_mostrado ?cosa))
+  (printout t "!! Estoy asumiendo por defecto que el valor de '" ?cosa "' es: ")
   (foreach ?v $?valores
     (printout t ?v " "))
   (printout t crlf)
 )
 
+; Avanzamos al siguiente modulo
 (defrule a_Avanzar_razonador
   (declare (salience -2))
   ?f <- (modulo PREGUNTAR_RECOMENDAR_ASIG)
@@ -302,124 +317,143 @@
 )
 
 
-;
-; MÓDULO RAZONAR_RECOMENDAR_ASIG
-;
+;;;;;;
+;;;;;; MODULO PARA EL RAZONADOR
+;;;;;;
 
+; Inicializamos informacion necesaria para el razonador
 (defrule a_Inicializar
   (declare (salience 2))
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  (T1 ListaAsig $?lasig)
-  (T1 Curso ?curso)
+  (RA ListaAsig $?lasig)
+  (RA Curso ?curso)
   =>
   (assert
-    (T1 CreditosRecomendados 0)
-    (T1 AsigRecomendadas)
-    (T1 RecomendarCurso menor_igual)) ; por defecto
+    (RA CreditosRecomendados 0)
+    (RA AsigRecomendadas)
+    (RA RecomendarCurso menor_igual)) ; por defecto
+  ; Buscamos las asignaturas que estan en la lista
   (do-for-all-facts ((?f asignatura))
     (neq (member$ ?f:id $?lasig) FALSE)
+      ; Le damos prioridad a la de cursos menores o iguales
       (if (> ?f:curso ?curso) then
         (assert
-          (T1 Puntos ?f:id -1000)
-          (T1 motivos-pos ?f:id "")
-          (T1 motivos-neg ?f:id (format nil "  + Esta asignatura es de un curso superior, y por defecto no te la recomiendo primero%n")))
+          (RA Puntos ?f:id -1000)
+          (RA motivos-pos ?f:id "Javier Saez" "")
+          (RA motivos-neg ?f:id "Javier Saez" (format nil "  + Esta asignatura es de un curso superior, y por defecto no te la recomiendo primero%n")))
       else
         (assert
-          (T1 Puntos ?f:id 0)
-          (T1 motivos-pos ?f:id (format nil "  + Por defecto te recomiendo primero asignaturas de tu curso o menor%n"))
-          (T1 motivos-neg ?f:id ""))))
+          (RA Puntos ?f:id 0)
+          (RA motivos-pos ?f:id "Javier Saez" (format nil "  + Por defecto te recomiendo primero asignaturas de tu curso o menor%n"))
+          (RA motivos-neg ?f:id "Javier Saez" ""))))
 )
 
+; Si finalmente se elimina la restriccion de los cursos, retractamos la informacion
 (defrule a_Retractar_curso_por_defecto
   (declare (salience 1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  ?f <- (T1 RecomendarCurso menor_igual)
+  ?f <- (RA RecomendarCurso menor_igual)
   (or
-    (T1 dato nota segura A)
-    (T1 dato capacidad segura A))
+    (RA dato nota segura A)
+    (RA dato capacidad segura A))
   =>
   (retract ?f)
-  (assert (T1 RecomendarCurso cualquiera))
+  (assert (RA RecomendarCurso cualquiera))
   (printout t crlf "!! Como tienes una nota alta o una gran capacidad de trabajo, voy a" crlf
               "eliminar la restriccion por defecto de no recomendar asignaturas de" crlf
               "cursos superiores" crlf)
 )
 
+; Retractamos los motivos por defecto sobre los cursos
 (defrule a_Retractar_curso_por_defecto_motivos
   (declare (salience 1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  (T1 RecomendarCurso cualquiera)
-  ?f <- (T1 ?mot & motivos-pos|motivos-neg ?id ?expl & :(neq ?expl ""))
+  (RA RecomendarCurso cualquiera)
+  ?f <- (RA ?mot & motivos-pos|motivos-neg ?id  ?experto ?expl & :(neq ?expl ""))
   =>
   (retract ?f)
-  (assert (T1 ?mot ?id ""))
+  (assert (RA ?mot ?id ?experto ""))
 )
 
+; Retractamos los puntos penalizando a los cursos superiores
 (defrule a_Retractar_curso_por_defecto_puntos
   (declare (salience 1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  (T1 RecomendarCurso cualquiera)
-  ?f <- (T1 Puntos ?id -1000)
-  (not (T1 Retractado_puntos ?id))
+  (RA RecomendarCurso cualquiera)
+  ?f <- (RA Puntos ?id -1000)
+  (not (RA Retractado_puntos ?id))
   =>
   (retract ?f)
   (assert
-    (T1 Retractado_puntos ?id)
-    (T1 Puntos ?id 0))
+    (RA Retractado_puntos ?id)
+    (RA Puntos ?id 0))
 )
 
+; Funcion auxiliar que añade un hecho con una explicacion
 (deffunction add-explicacion (?sentido ?id ?expl ?defecto)
   (if (= (str-compare ?sentido "positiva") 0) then
-    (assert (T1 explicacion-positiva ?id ?expl ?defecto))
+    (assert (RA explicacion-positiva ?id ?expl ?defecto))
   else
-    (assert (T1 explicacion-negativa ?id ?expl ?defecto)))
+    (assert (RA explicacion-negativa ?id ?expl ?defecto)))
 )
 
+; FASE 1 del razonador: procesar antecedentes de todas las reglas
 (defrule a_Procesar_antecedentes
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (regla ?num antecedentes $?ant)
   =>
   (assert
-    (T1 seguridad ?num segura)
-    (T1 Procesar_consecuentes ?num))
+    ; La regla es segura salvo que se demuestre lo contrario
+    (RA seguridad ?num segura)
+    (RA Procesar_consecuentes ?num))
   (bind ?i 1)
+
+  ; Vamos cogiendo las parejas caracteristica-valor y asertando un hecho para procesarlas
   (while TRUE do
     (if (> ?i (length $?ant)) then
       (break))
-    (assert (T1 check-antecedente ?num (nth$ ?i $?ant) (nth$ (+ ?i 1) $?ant)))
+    (assert (RA check-antecedente ?num (nth$ ?i $?ant) (nth$ (+ ?i 1) $?ant)))
     (bind ?i (+ ?i 2)))
 )
 
+; Comprobamos si se cumplen o no los antecedentes
 (defrule a_Check-antecedentes
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  ?f <- (T1 check-antecedente ?num ?caract ?valor)
-  ?g <- (T1 seguridad ?num ?seg)
-  (T1 dato ?caract ?defecto ?v)
+  ?f <- (RA check-antecedente ?num ?caract ?valor)
+  ?g <- (RA seguridad ?num ?seg)
+  (RA dato ?caract ?defecto ?v)
   =>
   (if (eq ?v ?valor) then
+    ; Retractar el hecho (RA check-antecedente) equivale a especificar que se cumple el antecedente
     (retract ?f)
+    ; Si habia informacion por defecto, la regla completa es por_defecto
     (if (and (eq ?defecto por_defecto) (neq ?seg ?defecto)) then
       (retract ?g)
-      (assert (T1 seguridad ?num por_defecto))))
+      (assert (RA seguridad ?num por_defecto))))
 )
 
+; Procesamos los consecuentes de aquellas reglas cuyos antecedentes se cumplan
 (defrule a_Procesar_consecuentes
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  (T1 ListaAsig $?lasig)
+  (RA ListaAsig $?lasig)
   (regla ?num consecuentes ?signo ?caract $?valores)
   (regla ?num explicacion ?expl)
-  (T1 seguridad ?num ?defecto)
-  ?f <- (T1 Procesar_consecuentes ?num)
-  (not (T1 check-antecedente ?num $?))
+  (RA seguridad ?num ?defecto)
+  ?f <- (RA Procesar_consecuentes ?num)
+  (not (RA check-antecedente ?num $?))
   =>
   (retract ?f)
+  ; Para cada posible valor del consecuente
   (foreach ?valor $?valores
+    ; Buscamos las asignaturas de la lista con el valor especificado
     (bind ?facts
       (find-all-facts ((?f asignatura))
         (and (neq (member$ ?f:id $?lasig) FALSE) (eq ?f:?caract ?valor))))
 
+    ; Para cada caracteristica encontrada
     (loop-for-count (?i 1 (length$ ?facts))
       (bind ?id (fact-slot-value (nth$ ?i ?facts) id))
+      ; Contabilizamos la regla como aplicada
       (assert (contar ?id ?signo por_regla ?num))
       (if (= ?signo 1) then
         (add-explicacion positiva ?id ?expl ?defecto)
@@ -427,58 +461,67 @@
         (add-explicacion negativa ?id ?expl ?defecto))))
 )
 
+; Contabilizamos las reglas relacionadas con las areas de conocimiento
 (defrule a_Contar_puntos_area
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  (T1 dato areas ?defecto $?la)
-  (T1 ListaAsig $?lasig)
+  (RA dato areas ?defecto $?la)
+  (RA ListaAsig $?lasig)
   =>
+  ; Para cada elemento de la lista de areas proporcionada
   (loop-for-count (?i 1 (length$ $?la))
     (bind ?a (nth$ ?i $?la))
+    ; Para cada asignatura de la lista con ese elemento en sus areas relacionadas
     (do-for-all-facts ((?f asignatura))
       (and (neq (member$ ?f:id $?lasig) FALSE) (neq (member$ ?a ?f:areas) FALSE))
+        ; Buscamos el nombre completo del area en cuestion
         (do-for-all-facts ((?g equivalencia_area)) (eq ?a (nth$ 1 ?g:implied))
             (bind ?a_equiv (nth$ 2 ?g:implied))
+            ; Añadimos la explicacion pertinente y contabilizamos con 2 puntos
             (add-explicacion positiva ?f:id (str-cat "Es afin al area de conocimiento " ?a_equiv ", asi que creo que te gustaran los contenidos" ) ?defecto)
-            (assert
-              (contar ?f:id 2 por_area (nth ?i $?la))))))
+            (assert (contar ?f:id 2 por_area (nth ?i $?la))))))
 )
 
+; Contabilizamos los puntos por satisfacer las reglas para cada asignatura
 (defrule a_Contar_puntos
   (modulo RAZONAR_RECOMENDAR_ASIG)
   ?f <- (contar ?id ?s $?)
-  ?g <- (T1 Puntos ?id ?n)
+  ?g <- (RA Puntos ?id ?n)
   =>
   (retract ?f ?g)
-  (assert (T1 Puntos ?id (+ ?n ?s)))
+  (assert (RA Puntos ?id (+ ?n ?s)))
 )
 
+; Priorizamos las asignaturas favoritas (si hay alguna en la lista)
 (defrule a_Puntos_asignatura_favorita
   (modulo RAZONAR_RECOMENDAR_ASIG)
   (Asignatura_fav ?id)
   (Explicacion_fav ?id ?expl)
-  ?f <- (T1 Puntos ?id ?n)
-  (not (T1 Contada_fav ?id))
+  ?f <- (RA Puntos ?id ?n)
+  (not (RA Contada_fav ?id))
   =>
   (retract ?f)
   (assert
-    (T1 Puntos ?id (+ ?n 1000))
-    (T1 Contada_fav ?id))
+    (RA Puntos ?id (+ ?n 1000))
+    (RA Contada_fav ?id))
   (add-explicacion positiva ?id ?expl seguro)
 )
 
+; Finalmente, elegimos las asignaturas que mas arriba en el ranking han quedado,
+; hasta completar el numero de creditos pedido o quedarse lo mas cerca posible
 (defrule a_Max_puntos
   (declare (salience -1))
   (modulo RAZONAR_RECOMENDAR_ASIG)
-  ?f <- (T1 Puntos ?id ?n)
-  ?g <- (T1 CreditosRecomendados ?c)
-  ?h <- (T1 AsigRecomendadas $?actual)
-  (T1 Creditos ?c_tot)
+  ?f <- (RA Puntos ?id ?n)
+  ?g <- (RA CreditosRecomendados ?c)
+  ?h <- (RA AsigRecomendadas $?actual)
+  (RA Creditos ?c_tot)
   (not
     (and
-      (T1 Puntos ?otro_id ?m)
+      (RA Puntos ?otro_id ?m)
       (test (> ?m ?n))))
   =>
   (retract ?f)
+  ; Buscamos la asignatura con el id especificado como el maximo
   (bind ?asig (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id ?id)))))
   (bind ?asig_id (fact-slot-value ?asig id))
   (bind ?asig_cred (fact-slot-value ?asig creditos))
@@ -486,79 +529,91 @@
   (if (<= ?new_c ?c_tot) then
     (retract ?g ?h)
     (assert
-      (T1 CreditosRecomendados ?new_c)
-      (T1 AsigRecomendadas $?actual ?asig_id)))
+      (RA CreditosRecomendados ?new_c)
+      (RA AsigRecomendadas $?actual ?asig_id)))
 )
 
+; Avanzamos al modulo recomendador
 (defrule a_Avanzar_recomendador
   (declare (salience -2))
   ?f <- (modulo RAZONAR_RECOMENDAR_ASIG)
   =>
   (retract ?f)
-  (assert (modulo RECOMENDAR_RECOMENDAR_ASIG))
+  (assert (modulo ACONSEJAR_RECOMENDAR_ASIG))
 )
 
 
-;
-; MODULO DE RECOMENDACIONES
-;
+;;;;;;
+;;;;;; MODULO PARA LAS RECOMENDACIONES
+;;;;;;
 
+; Concatenamos todos los motivos positivos de las asignaturas
 (defrule a_Juntar_motivos_positivos
   (declare (salience 1))
-  (modulo RECOMENDAR_RECOMENDAR_ASIG)
-  ?f <- (T1 explicacion-positiva ?id ?expl ?defecto)
-  ?g <- (T1 motivos-pos ?id ?mot)
+  (modulo ACONSEJAR_RECOMENDAR_ASIG)
+  ?f <- (RA explicacion-positiva ?id ?expl ?defecto)
+  ?g <- (RA motivos-pos ?id ?experto ?mot)
   =>
   (retract ?f ?g)
   (bind ?s *)
   (if (eq ?defecto por_defecto) then
     (bind ?s +))
-  (assert (T1 motivos-pos ?id (format nil (str-cat ?mot "  " ?s " " ?expl "%n"))))
+  (assert (RA motivos-pos ?id ?experto (format nil (str-cat ?mot "  " ?s " " ?expl "%n"))))
 )
 
+; Concatenamos todos los motivos negativos de las asignaturas
 (defrule a_Juntar_motivos_negativos
   (declare (salience 1))
-  (modulo RECOMENDAR_RECOMENDAR_ASIG)
-  ?f <- (T1 explicacion-negativa ?id ?expl ?defecto)
-  ?g <- (T1 motivos-neg ?id ?mot)
+  (modulo ACONSEJAR_RECOMENDAR_ASIG)
+  ?f <- (RA explicacion-negativa ?id ?expl ?defecto)
+  ?g <- (RA motivos-neg ?id ?experto ?mot)
   =>
   (retract ?f ?g)
   (bind ?s *)
   (if (eq ?defecto por_defecto) then
     (bind ?s +))
-  (assert (T1 motivos-neg ?id (format nil (str-cat ?mot "  " ?s " " ?expl "%n"))))
+  (assert (RA motivos-neg ?id ?experto (format nil (str-cat ?mot "  " ?s " " ?expl "%n"))))
 )
 
+; Imprimimos las recomendaciones del sistema
 (defrule a_Recomendar
-  (modulo RECOMENDAR_RECOMENDAR_ASIG)
-  (T1 Creditos ?c_orig)
-  (T1 CreditosRecomendados ?c)
-  (T1 AsigRecomendadas $?lasig)
+  (modulo ACONSEJAR_RECOMENDAR_ASIG)
+  (RA Creditos ?c_orig)
+  (RA CreditosRecomendados ?c)
+  (RA AsigRecomendadas $?lasig)
   =>
   (printout t crlf "Numero de creditos que te recomiendo matricular: " ?c crlf)
   (if (> ?c_orig ?c) then
     (printout t "(No te puedo recomendar los " ?c_orig " creditos que querias con la lista " crlf
                 "de asignaturas que me has dado, bien porque no tengo informacion sobre suficientes asignaturas" crlf "o bien porque no hay suficientes para cubrir los creditos)" crlf))
+  ; Si hay alguna recomendacion
   (if (> (length$ $?lasig) 0) then
     (printout t "Aqui esta la lista de asignaturas que te recomiendo, ordenada de forma que " crlf
                 "conforme mas arriba este, mas fuerte es la recomendacion. Se indica con el simbolo '+' cuando el motivo" crlf "contenga informacion asumida por defecto." crlf)
+    ; Para cada recomendacion
     (loop-for-count (?i 1 (length$ $?lasig))
+      ; Buscamos la asignatura con el id correspondiente
       (bind ?asig
         (fact-index (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig))))))
+      ; Buscamos el motivo correspondiente
       (bind ?motivo (fact-index (nth$ 1
-        (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-pos) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
-      (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
+        (find-fact ((?g RA)) (and (eq (nth$ 1 ?g:implied) motivos-pos) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
+      ; Imprimimos la informacion
+      (bind ?experto (nth$ 3 (fact-slot-value ?motivo implied)))
+      (bind ?texto_mot (nth$ 4 (fact-slot-value ?motivo implied)))
       (printout t crlf "Recomendacion: " (fact-slot-value ?asig nombre) crlf "---------------------------------------"
-       crlf "Experto: Javier Saez" crlf "Curso: " (fact-slot-value ?asig curso) crlf "Motivos: " crlf)
+       crlf "Experto: " ?experto crlf "Curso: " (fact-slot-value ?asig curso) crlf "Motivos: " crlf)
+      ; Si el motivo es vacio es que se ha elegido para completar los creditos
       (if (<> (str-compare ?texto_mot "") 0) then
         (printout t ?texto_mot)
       else
         (printout t "  * No hay motivos mas alla de que faltaban creditos por rellenar" crlf))))
 )
 
+; Preguntamos al usuario si quiere ver los motivos negativos
 (defrule a_Pregunta_mostrar_motivos_neg
   (declare (salience -1))
-  (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  (modulo ACONSEJAR_RECOMENDAR_ASIG)
   =>
   (printout t crlf "Quieres ver los principales motivos por los que el resto de asignaturas" crlf
               "no han sido recomendadas? (S/N): ")
@@ -567,32 +622,39 @@
   (printout t crlf)
 )
 
+; Imprimimos las asignaturas descartadas y los motivos negativos
 (defrule a_Mostrar_motivos_neg
-  (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  (modulo ACONSEJAR_RECOMENDAR_ASIG)
   ?f <- (Mostrar_neg)
-  (T1 AsigRecomendadas $?lrec)
-  (T1 ListaAsig $?lasig)
+  (RA AsigRecomendadas $?lrec)
+  (RA ListaAsig $?lasig)
   (test (> (length$ $lrec) 0))
   =>
   (bind ?vacio S)
+  ; Para cada id de asignatura de la lista inicial
   (loop-for-count (?i 1 (length$ $?lasig))
+    ; Obtenemos la direccion de la asignatura correspondiente
     (bind ?asig_addr (nth$ 1 (find-fact ((?a asignatura)) (eq ?a:id (nth$ ?i $?lasig)))))
     (if (neq ?asig_addr nil) then
       (bind ?asig (fact-index ?asig_addr))
+      ; Si no se encuentra en la lista de recomendadas, obtenemos los motivos negativos
       (if (eq (member$ (fact-slot-value ?asig id) $?lrec) FALSE) then
         (bind ?motivo (fact-index (nth$ 1
-          (find-fact ((?g T1)) (and (eq (nth$ 1 ?g:implied) motivos-neg) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
+          (find-fact ((?g RA)) (and (eq (nth$ 1 ?g:implied) motivos-neg) (eq (nth$ 2 ?g:implied) (fact-slot-value ?asig id)))))))
 
-        (bind ?texto_mot (nth$ 3 (fact-slot-value ?motivo implied)))
+        ; Mostramos la informacion
+        (bind ?experto (nth$ 3 (fact-slot-value ?motivo implied)))
+        (bind ?texto_mot (nth$ 4 (fact-slot-value ?motivo implied)))
         (if (<> (str-compare ?texto_mot "") 0) then
           (bind ?vacio N)
           (printout t (fact-slot-value ?asig nombre) crlf "---------------------------------------"
-          crlf "Experto: Javier Saez" crlf "Curso: " (fact-slot-value ?asig curso) crlf "Motivos de rechazo: " crlf ?texto_mot crlf)))))
+          crlf "Experto: " ?experto crlf "Curso: " (fact-slot-value ?asig curso) crlf "Motivos de rechazo: " crlf ?texto_mot crlf)))))
 
   (if (eq ?vacio N) then
     (retract ?f))
 )
 
+; Si no habia motivos negativos, lo decimos
 (defrule a_No_neg
   (declare (salience -1))
   ?f <- (Mostrar_neg)
@@ -602,9 +664,10 @@
               "mas motivos positivos." crlf crlf)
 )
 
+; Finalizamos el recomendador y volvemos al submenu del subsistema
 (defrule a_Volver_menu_recomendar
   (declare (salience -2))
-  ?f <- (modulo RECOMENDAR_RECOMENDAR_ASIG)
+  ?f <- (modulo ACONSEJAR_RECOMENDAR_ASIG)
   =>
   (retract ?f)
   (assert

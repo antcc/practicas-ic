@@ -1,3 +1,51 @@
+;;;;;;;;;;;;;;;; RECOMENDACION DE UNA AGINATURA (DATOS) ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Recogemos los hechos estaticos que representan el problema
+;;; de recomendar una asignatura de Ingenieria Informatica como lo
+;;; haria un estudiante.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Ingenieria del Conocimiento. Curso 2019/20.
+;;; Antonio Coin Castro.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Definimos las opciones que tendra el usuario
+(deffacts Opciones
+  (Opciones a b c)
+)
+
+;;; INFORMACION DE LAS CARACTERISTICAS
+
+; Lista de variables y valores por defecto
+(deffacts Por_defecto
+  (variable nota M)
+  (variable horas M)
+  (variable areas DS)
+  (variable capacidad M)
+  (variable programacion A)
+  (variable practicas M)
+)
+
+; Umbrales de bajo/medio/alto para caracteristicas numericas
+(deffacts Equivalencias_cat
+  (equivalencia_cat nota u1 6.5)
+  (equivalencia_cat nota u2 8)
+  (equivalencia_cat horas u1 2)
+  (equivalencia_cat horas u2 4)
+)
+
+; Equivalencia en texto de los codigos de areas
+(deffacts Equivalencia_areas
+  (equivalencia_area IA "Inteligencia artificial")
+  (equivalencia_area BD "Bases de datos")
+  (equivalencia_area DS "Desarrollo de software")
+  (equivalencia_area RS "Redes")
+  (equivalencia_area IT "Informatica Teorica")
+  (equivalencia_area WB "Tecnologias web")
+  (equivalencia_area HW "Hardware")
+)
+
+;;; INFORMACION DE LAS ASIGNATURAS
+
 (deftemplate asignatura
   (slot id)
   (slot nombre)
@@ -10,41 +58,6 @@
   (slot hardware (allowed-values si no) (default no))
   (multislot areas (allowed-values IA BD DS RS WB HW IT))
 )
-
-; Definimos las opciones que tendrá el usuario
-(deffacts Opciones
-  (Opciones a b c)
-)
-
-(deffacts Equivalencias_cat
-  (equivalencia_cat nota u1 5)
-  (equivalencia_cat nota u2 8)
-  (equivalencia_cat horas u1 2)
-  (equivalencia_cat horas u2 4)
-)
-
-(deffacts Equivalencia_areas
-  (equivalencia_area IA "Inteligencia artificial")
-  (equivalencia_area BD "Bases de datos")
-  (equivalencia_area DS "Desarrollo de software")
-  (equivalencia_area RS "Redes")
-  (equivalencia_area IT "Informatica Teorica")
-  (equivalencia_area WB "Tecnologias web")
-  (equivalencia_area HW "Hardware")
-)
-
-(deffacts Asignaturas_favoritas
-  (Asignatura_fav MAC)
-  (Explicacion_fav MAC "Es la asignatura favorita del experto y la recomienda siempre.%n    Considera que es una asignatura esencial para todo ingenier@ informatic@, a pesar de su dificultad")
-)
-
-(deffacts Por_defecto
-  (variable nota M)
-  (variable horas M)
-  (variable areas DS)
-  (variable capacidad M)
-  (variable programacion A)
-  (variable practicas M))
 
 ; Definimos las asignaturas que conoce el experto
 (deffacts Asignaturas
@@ -309,8 +322,17 @@
     (areas WB))
 )
 
+; Especificamos las asignaturas favoritas
+(deffacts Asignaturas_favoritas
+  (Asignatura_fav MAC)
+  (Explicacion_fav MAC "Es la asignatura favorita del experto y la recomienda siempre.%n    Considera que es una asignatura esencial para todo ingenier@ informatic@, a pesar de su dificultad")
+)
+
+;;; REGLAS DE RAZONAMIENTO
+
 ; (regla NUM antecedentes RESPUESTA1 VALOR1 RESPUESTA2 VALOR2 ...)
 ; (regla NUM consecuentes 1|-1 CARACTERISTICA VALOR_AFECTADO_1 VALOR_AFECTADO_2 ...)
+; (regla NUM explicacion EXPLICACION)
 (deffacts Reglas
   ; Dificultad (+)
   (regla 1 antecedentes nota M capacidad A)
@@ -414,5 +436,4 @@
   (regla 27 antecedentes practicas A)
   (regla 27 consecuentes -1 tipo teorica)
   (regla 27 explicacion "Es teorica y me has dicho que prefieres mas bien cosas practicas")
-
 )

@@ -1,0 +1,8 @@
+(clear)
+(load asig.datos.clp)
+(load ramas.datos.clp)
+(load asig.clp)
+(load ramas.clp)
+(load recomendador.clp)
+(reset)
+(run)

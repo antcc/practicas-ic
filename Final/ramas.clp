@@ -184,17 +184,17 @@
 (assert (Evaluacion bbdd (read)))
 )
 
-(defrule r_Avanzar_modulo_puntuacion
+(defrule r_Avanzar_modulo_razonamiento
 (declare (salience -1))
 ?f <- (modulo PREGUNTAR_RECOMENDAR_RAMA)
 =>
 (retract ?f)
-(assert (modulo PUNTUAR_RECOMENDAR_RAMA))
+(assert (modulo RAZONAR_RECOMENDAR_RAMA))
 )
 
 
 ;;;;;;
-;;;;;; MODULO PARA LA PUNTUACION
+;;;;;; MODULO PARA EL RAZONAMIENTO
 ;;;;;;
 
 ;;;;;; TRANSFORMAR VARIABLES CATEGÓRICAS A NUMÉRICAS
@@ -205,7 +205,7 @@
 
 (defrule r_Transforma_futuro_docencia
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Evaluacion futuro D)
 =>
 (assert
@@ -216,7 +216,7 @@
 
 (defrule r_Transforma_futuro_publica
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Evaluacion futuro P)
 =>
 (assert
@@ -227,7 +227,7 @@
 
 (defrule r_Transforma_futuro_empresa
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Evaluacion futuro E)
 =>
 (assert
@@ -241,7 +241,7 @@
 
 (defrule r_Transforma_S
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Evaluacion ?cosa S)
 =>
 (assert (Respuesta_num ?cosa 10))
@@ -249,7 +249,7 @@
 
 (defrule r_Transforma_N
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Evaluacion ?cosa N)
 =>
 (assert (Respuesta_num ?cosa 0))
@@ -264,7 +264,7 @@
 
 (defrule r_Evalua_bajo
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Respuesta_num ?cosa ?n)
 ?f <- (Evaluacion ?cosa desconocido)
 (test (< ?n 5))
@@ -275,7 +275,7 @@
 
 (defrule r_Evalua_medio
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Respuesta_num ?cosa ?n)
 ?f <- (Evaluacion ?cosa desconocido)
 (test (and (>= ?n 5) (< ?n 8)))
@@ -286,7 +286,7 @@
 
 (defrule r_Evalua_alto
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Respuesta_num ?cosa ?n)
 ?f <- (Evaluacion ?cosa desconocido)
 (test (and (>= ?n 8) (<= ?n 10)))
@@ -305,7 +305,7 @@
 
 (defrule r_Sumar_puntos_futuro_directo
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Respuesta_num ?cosa & docencia|publica|empresa ?n)
 (Contribuye ?cosa ?rama ?factor)
 ?f <- (Puntuacion ?rama ?m)
@@ -323,7 +323,7 @@
 
 (defrule r_Sumar_puntos_futuro_inverso
 (declare (salience 1))
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Respuesta_num ?cosa & docencia|publica|empresa ?n & :(< ?n 5))
 (Contribuye_inv ?cosa ?rama ?factor)
 ?f <- (Puntuacion ?rama ?m)
@@ -339,7 +339,7 @@
 )
 
 (defrule r_Sumar_puntos_resto_directo
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Respuesta_num ?cosa ?n)
 (Contribuye ?cosa ?rama ?factor)
 ?f <- (Puntuacion ?rama ?m)
@@ -356,7 +356,7 @@
 )
 
 (defrule r_Sumar_puntos_resto_inverso
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Respuesta_num ?cosa ?n & :(< ?n 5))
 (Contribuye_inv ?cosa ?rama ?factor)
 ?f <- (Puntuacion ?rama ?m)
@@ -379,7 +379,7 @@
 
 ; Solo agregamos los motivos poco importantes en el modo completo
 (defrule r_Agregar_motivo_poco_importante
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 (Modo_completo S)
 ?f <- (Agregar_motivo ?cosa ?rama ?puntos)
 (Evaluacion ?cosa ?eval_abreviado)
@@ -396,7 +396,7 @@
 )
 
 (defrule r_Agregar_motivo_neutral
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 ?f <- (Agregar_motivo ?cosa ?rama ?puntos)
 (Evaluacion ?cosa ?eval_abreviado)
 (Equivalencia_texto ?cosa ?texto)
@@ -412,7 +412,7 @@
 )
 
 (defrule r_Agregar_motivo_importante
-(modulo PUNTUAR_RECOMENDAR_RAMA)
+(modulo RAZONAR_RECOMENDAR_RAMA)
 ?f <- (Agregar_motivo ?cosa ?rama ?puntos)
 (Evaluacion ?cosa ?eval_abreviado)
 (Equivalencia_texto ?cosa ?texto)
@@ -429,7 +429,7 @@
 
 (defrule r_Avanzar_modulo_aconsejar
 (declare (salience -1))
-?f <- (modulo PUNTUAR_RECOMENDAR_RAMA)
+?f <- (modulo RAZONAR_RECOMENDAR_RAMA)
 =>
 (retract ?f)
 (assert (modulo ACONSEJAR_RECOMENDAR_RAMA))
@@ -593,7 +593,7 @@
 
 ;;; Mensaje de pausa para volver al menu principal
 
-(defrule r_Volver_menu_
+(defrule r_Volver_menu_principal
   (declare (salience -2))
   ?f <- (modulo ACONSEJAR_RECOMENDAR_RAMA)
   =>
